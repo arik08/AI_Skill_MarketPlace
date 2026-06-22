@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POSCO AI Skill Hub</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="./src/styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-40 px-4 sm:px-6 py-4 flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-blue-500/10">
+                <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <span class="text-xs font-bold tracking-wider text-blue-600 block uppercase">POSCO Group Enterprise Portal</span>
+                <h1 class="text-lg sm:text-xl font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent flex items-center gap-2 keep-korean">
+                    POSCO AI Skill Hub <span class="hidden sm:inline-flex text-[11px] bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full border border-blue-200 font-semibold">AX Marketplace</span>
+                </h1>
+            </div>
+        </div>
+
+        <nav class="hidden md:flex items-center gap-1">
+            <button onclick="switchView('marketplace')" id="nav-marketplace" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-slate-100 text-slate-800 shadow-inner">
+                <i data-lucide="store" class="w-4 h-4"></i> 마켓플레이스
+            </button>
+            <button onclick="openRegisterModal()" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
+                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i> 신규 스킬 등록
+            </button>
+            <button onclick="showToast('이 기능은 준비 중입니다.', 'info')" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
+                <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i> 관리자 심사
+            </button>
+        </nav>
+
+        <div class="flex items-center gap-4">
+            <!-- Simple User profile info -->
+            <div class="flex items-center gap-3 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
+                <div class="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-sm ring-2 ring-indigo-500/10">
+                    박
+                </div>
+                <div class="hidden sm:block text-left">
+                    <span class="block text-[10px] text-slate-500 font-medium">경영기획DX추진TF팀</span>
+                    <span class="block text-xs font-semibold text-slate-700">박민우 프로 (User)</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="flex-1 flex flex-col">
+        <!-- MODE 1: Marketplace Home View -->
+        <section id="view-marketplace" class="p-6 max-w-7xl mx-auto w-full space-y-6">
+            
+            <!-- Hero banner/Search Area -->
+            <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 p-8 rounded-2xl border border-slate-200 shadow-lg relative overflow-hidden text-white">
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"></div>
+                <div class="absolute -left-10 -bottom-10 w-40 h-40 bg-purple-500/20 rounded-full blur-3xl"></div>
+                
+                <div class="relative z-10 max-w-3xl">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-white mb-2 leading-tight keep-korean">
+                        사내 AI Agent를 위한 최적의 업무 스킬 탐색기
+                    </h2>
+                    <p class="text-slate-300 text-sm sm:text-base mb-6">
+                        사내 구성원들이 직접 제작하고 검증한 프롬프트, API, MCP Tool 등 다양한 포맷의 업무 자동화 스킬을 즉시 장착하고 재사용하세요.
+                    </p>
+                    
+                    <!-- Integrated Natural Language Search -->
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5"></i>
+                            <input type="text" id="main-search-input" placeholder="스킬명, 기능 설명, 등록자 또는 자연어로 검색해보세요 (예: 투자보고서 자동으로 만들어주는 스킬)" 
+                                   class="w-full pl-12 pr-4 py-3.5 bg-slate-850 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400 text-sm transition-all shadow-inner">
+                        </div>
+                        <button onclick="handleSearch()" class="px-6 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg shadow-blue-500/20 active:scale-95">
+                            검색하기
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Quick Recommend & Filter -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+                
+                <!-- Left Filter Panel -->
+                <aside class="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-5 space-y-6 shadow-sm">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
+                            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-600"></i> 상세 필터
+                        </h3>
+                        <button onclick="resetFilters()" class="text-xs text-slate-400 hover:text-blue-600 transition-colors flex items-center gap-1">
+                            <i data-lucide="rotate-ccw" class="w-3 h-3"></i> 초기화
+                        </button>
+                    </div>
+
+                    <!-- Category / Workspaces -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">업무 영역</h4>
+                        <div class="flex flex-col gap-1" id="filter-category">
+                            <!-- Populated dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- Skill Type -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">스킬 유형</h4>
+                        <div class="flex flex-col gap-1" id="filter-type">
+                            <!-- Populated dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- Verification Status -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">검증 상태</h4>
+                        <div class="flex flex-col gap-1" id="filter-status">
+                            <!-- Populated dynamic -->
+                        </div>
+                    </div>
+
+                    <!-- Visibility Scope -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">공개 권한</h4>
+                        <div class="flex flex-col gap-1.5" id="filter-visibility">
+                            <!-- Populated dynamic -->
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Right Skill Marketplace Content -->
+                <div class="lg:col-span-3 space-y-4">
+                    
+                    <!-- Sorting & Quick Info -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="text-sm text-slate-500">
+                            총 <span id="skills-count" class="font-bold text-blue-600">0</span>개의 정교한 AI 스킬 검색됨
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs text-slate-500 whitespace-nowrap">정렬 조건</label>
+                            <select id="sort-select" onchange="handleSort()" class="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-lg py-1.5 pl-2.5 pr-8 focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                                <option value="recommended">내 업무 추천순 🌟</option>
+                                <option value="download">다운로드 많은순 ⬇</option>
+                                <option value="run">실행 횟수순 ▶</option>
+                                <option value="like">좋아요 많은순 👍</option>
+                                <option value="quality">품질점수 우수순 💯</option>
+                                <option value="recent">최근 업데이트순 📅</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Active Tag Badges -->
+                    <div id="active-filter-badges" class="flex flex-wrap gap-2 items-center">
+                        <!-- Dynamic badges based on filters -->
+                    </div>
+
+                    <!-- Skills Cards Grid -->
+                    <div id="skills-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODE 2: Skill Detail / VS Code 2-Split View -->
+        <section id="view-detail" class="hidden flex-1 flex flex-col bg-white">
+            
+            <!-- VS Code Title Bar / Top Info Header -->
+            <div class="bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                
+                <!-- Back Button & Title block -->
+                <div class="flex items-center gap-4">
+                    <button onclick="switchView('marketplace')" class="p-2 hover:bg-slate-200/60 text-slate-500 hover:text-slate-800 rounded-lg transition-colors" title="마켓플레이스로 이동">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div id="detail-icon-wrapper" class="p-1.5 rounded bg-slate-200 text-slate-700">
+                                <!-- Dynamic Icon -->
+                            </div>
+                            <h2 id="detail-skill-name" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <!-- Dynamic Name -->
+                            </h2>
+                            <span id="detail-status-badge"></span>
+                        </div>
+                        <p id="detail-short-desc" class="text-xs text-slate-500 mt-1">
+                            <!-- Dynamic short description -->
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Dynamic Action Buttons -->
+                <div class="flex flex-wrap items-center gap-2 self-stretch md:self-auto justify-end">
+                    <button id="btn-like" onclick="triggerAction('like')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+                        <i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-pink-500"></i> 좋아요 <span id="detail-like-cnt" class="text-slate-800 ml-0.5"></span>
+                    </button>
+                    <button id="btn-install" onclick="triggerAction('install')" class="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i> 설치하기
+                    </button>
+                    <button id="btn-run" onclick="triggerAction('run')" class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
+                        <i data-lucide="play" class="w-3.5 h-3.5"></i> 실행해보기
+                    </button>
+                    <button id="btn-fork" onclick="triggerAction('fork')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+                        <i data-lucide="git-fork" class="w-3.5 h-3.5 text-blue-600"></i> 복제하기 (Fork)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sub Metadata strip -->
+            <div class="bg-white px-6 py-2 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2 border-b border-slate-200">
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span>등록자: <strong id="detail-owner" class="text-slate-700 font-medium"></strong></span>
+                    <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span>버전: <strong id="detail-version" class="text-blue-600"></strong></span>
+                    <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span>품질점수: <strong id="detail-quality" class="text-emerald-600"></strong></span>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span class="flex items-center gap-1"><i data-lucide="download-cloud" class="w-3.5 h-3.5 text-slate-400"></i> 다운로드: <strong id="detail-down-cnt" class="text-slate-700"></strong></span>
+                    <span class="flex items-center gap-1"><i data-lucide="activity" class="w-3.5 h-3.5 text-slate-400"></i> 실행수: <strong id="detail-run-cnt" class="text-slate-700"></strong></span>
+                    <span class="flex items-center gap-1"><i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-500"></i> 성공률: <strong id="detail-success-rate" class="text-slate-700"></strong></span>
+                </div>
+            </div>
+
+            <!-- 2-Split Workspace (Left Explorer, Right Content Pane) -->
+            <div class="flex-1 flex overflow-hidden">
+                
+                <!-- Left Sidebar (Explorer) -->
+                <aside class="w-64 bg-slate-100 border-r border-slate-200 flex flex-col select-none">
+                    
+                    <!-- Sidebar Section Title -->
+                    <div class="px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-200/50 border-b border-slate-200">
+                        <span>Explorer (스킬 구성요소)</span>
+                        <i data-lucide="folder-tree" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </div>
+
+                    <!-- Workspace Tree View -->
+                    <div class="flex-1 overflow-y-auto py-2 text-slate-600 text-sm vscode-scrollbar" id="explorer-tree">
+                        <!-- Populated dynamic based on selected skill definition -->
+                    </div>
+
+                    <!-- Quality Rating Indicator Block -->
+                    <div class="p-3 bg-white border border-slate-200 m-2 rounded-lg text-xs space-y-1.5 shadow-sm">
+                        <div class="flex items-center justify-between text-slate-500">
+                            <span>신뢰도 품질 점수</span>
+                            <span id="quality-indicator-score" class="font-bold text-emerald-600">0/100</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                            <div id="quality-indicator-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                        <p class="text-[10px] text-slate-400">
+                            * 기획 충실도, 검증 여부, 실행 성공률을 자동 종합 산출한 결과입니다.
+                        </p>
+                    </div>
+                </aside>
+
+                <!-- Right Code Editor/MD Document Viewer Pane -->
+                <main class="flex-1 flex flex-col bg-white overflow-hidden">
+                    
+                    <!-- Document Tab Bar -->
+                    <div class="bg-slate-100 border-b border-slate-200 flex items-center px-4 justify-between">
+                        <div class="flex items-center">
+                            <div class="flex items-center gap-1.5 bg-white text-slate-800 px-4 py-2.5 text-xs font-bold border-t-2 border-indigo-600 cursor-pointer">
+                                <i id="current-tab-icon" data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                                <span id="current-tab-name">README.md</span>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-mono text-slate-400 uppercase tracking-wide">VIEW MODE: READ-ONLY PREVIEW</span>
+                    </div>
+
+                    <!-- Right Body Content with Custom Rendering -->
+                    <div class="flex-1 overflow-y-auto p-6 md:p-8 vscode-scrollbar text-slate-700" id="detail-content-area">
+                        <!-- Content dynamically rendered depending on Explorer Node clicked -->
+                    </div>
+                </main>
+            </div>
+        </section>
+    </main>
+
+    <!-- NEW SKILL REGISTRATION MODAL (Multi-step Dynamic Flow) -->
+    <div id="register-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4 hidden">
+        <div class="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200">
+            
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-emerald-600"></i>
+                    <h3 class="text-lg font-bold text-slate-800">사내 AI 스킬 등록 마법사</h3>
+                </div>
+                <button onclick="closeRegisterModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Steps Progress Bar -->
+            <div class="px-6 py-4 bg-slate-50/50 border-b border-slate-100 overflow-x-auto whitespace-nowrap">
+                <div class="flex items-center justify-between gap-4 max-w-2xl mx-auto text-xs min-w-[500px]">
+                    <div id="step-node-1" class="flex items-center gap-1.5 text-blue-600 font-bold"><span class="w-5 h-5 rounded-full bg-blue-50 border border-blue-400 flex items-center justify-center">1</span>기본정보</div>
+                    <div class="flex-1 h-0.5 bg-slate-200" id="step-line-1"></div>
+                    <div id="step-node-2" class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">2</span>스킬 구성</div>
+                    <div class="flex-1 h-0.5 bg-slate-200" id="step-line-2"></div>
+                    <div id="step-node-3" class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">3</span>권한 설정</div>
+                    <div class="flex-1 h-0.5 bg-slate-200" id="step-line-3"></div>
+                    <div id="step-node-4" class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">4</span>테스트 실행</div>
+                    <div class="flex-1 h-0.5 bg-slate-200" id="step-line-4"></div>
+                    <div id="step-node-5" class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">5</span>리뷰 요청</div>
+                    <div class="flex-1 h-0.5 bg-slate-200" id="step-line-5"></div>
+                    <div id="step-node-6" class="flex items-center gap-1.5 text-slate-400"><span class="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center">6</span>완료/게시</div>
+                </div>
+            </div>
+
+            <!-- Modal Content (Forms) -->
+            <div class="p-6 overflow-y-auto flex-1 text-slate-600 space-y-4 text-sm vscode-scrollbar">
+                
+                <!-- STEP 1: Basic Information -->
+                <div id="reg-step-content-1" class="space-y-4">
+                    <div class="bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs text-blue-700">
+                        💡 등록하고자 하는 AI 스킬의 핵심 개념과 업무상 효과를 한 눈에 알아볼 수 있도록 간결하게 기술해주세요.
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">스킬명 *</label>
+                            <input type="text" id="reg-name" placeholder="예: 투자 타당성 검토 도우미" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">한 줄 설명 *</label>
+                            <input type="text" id="reg-short" placeholder="예: 투자 검토보고서 초안을 자동 생성합니다." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">업무 영역 *</label>
+                            <select id="reg-category" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800">
+                                <option value="투자관리">투자관리</option>
+                                <option value="사업관리">사업관리</option>
+                                <option value="경영기획">경영기획</option>
+                                <option value="재무">재무</option>
+                                <option value="구매">구매</option>
+                                <option value="법무">법무</option>
+                                <option value="HR">HR</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">스킬 유형 *</label>
+                            <select id="reg-type" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800">
+                                <option value="보고서생성형">보고서생성형</option>
+                                <option value="프롬프트형">프롬프트형</option>
+                                <option value="문서분석형">문서분석형</option>
+                                <option value="데이터분석형">데이터분석형</option>
+                                <option value="API연계형">API연계형</option>
+                                <option value="MCP Tool형">MCP Tool형</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">태그 (쉼표로 구분) *</label>
+                            <input type="text" id="reg-tags" placeholder="예: 투자보고서, NPV, 리스크, 보고서생성" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Skill Definition Config -->
+                <div id="reg-step-content-2" class="space-y-4 hidden">
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">시스템 프롬프트 (System Prompt) *</label>
+                            <textarea id="reg-prompt-system" rows="3" placeholder="스킬 실행 시 Agent 기저에 깔릴 프롬프트 로직을 기입하세요." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-mono text-xs focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">입력 스키마 JSON 정의 (Input Schema JSON)</label>
+                            <textarea id="reg-schema" rows="3" placeholder='{ "type": "object", "properties": { "projectName": { "type": "string" } } }' class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-mono text-xs focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800'></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">예제/샘플 데이터 설명 (Markdown 형식)</label>
+                            <textarea id="reg-example" rows="2" placeholder="사용자가 쉽게 참조할 만한 샘플 입/출력을 기입하세요." class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-mono text-xs focus:bg-white focus:ring-1 focus:ring-blue-500 focus:outline-none text-slate-800"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Permissions -->
+                <div id="reg-step-content-3" class="space-y-4 hidden">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5">기본 공개 범위</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <label class="border border-slate-200 bg-slate-50 p-3 rounded-xl cursor-pointer flex items-center gap-3 hover:border-slate-300 transition-colors">
+                                    <input type="radio" name="reg-vis" value="전사 공개" checked class="text-blue-600">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-700">전사 공개</span>
+                                        <span class="block text-[10px] text-slate-400">포스코 전 임직원이 조회/실행 가능</span>
+                                    </div>
+                                </label>
+                                <label class="border border-slate-200 bg-slate-50 p-3 rounded-xl cursor-pointer flex items-center gap-3 hover:border-slate-300 transition-colors">
+                                    <input type="radio" name="reg-vis" value="부서 공개" class="text-blue-600">
+                                    <div>
+                                        <span class="block text-xs font-bold text-slate-700">부서 공유</span>
+                                        <span class="block text-[10px] text-slate-400">소속 부서원 및 지정 관계사만 허용</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-slate-200 pt-3">
+                            <label class="block text-xs font-semibold text-slate-500 mb-2">실행 권한 제한 및 안전 장치</label>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-xs text-slate-600">
+                                    <input type="checkbox" id="reg-sec-erp" class="rounded text-blue-600 bg-slate-50 border-slate-350">
+                                    <span>실행 전 ERP 시스템 접근 권한 자동 대조 (개인 인사 정보 연동)</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-xs text-slate-600">
+                                    <input type="checkbox" id="reg-sec-mask" checked class="rounded text-blue-600 bg-slate-50 border-slate-350">
+                                    <span>입출력 내 포스코 기밀 및 민감 정보(개인식별정보 등) 마스킹 강제 적용</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 4: Test Run -->
+                <div id="reg-step-content-4" class="space-y-4 hidden">
+                    <p class="text-xs text-slate-500">
+                        제출 전 해당 스킬이 정상 실행되는지 실시간 가상 테스트를 수행합니다. 성공률 검사 모델이 구동됩니다.
+                    </p>
+                    <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-3">
+                        <div class="text-xs font-bold text-slate-600">가상 데이터 모의 러닝 결과:</div>
+                        <div id="test-run-indicator" class="text-slate-500 text-xs italic">
+                            [실행 버튼]을 누르면 보안 필터링과 응답 속도 체크를 시뮬레이션합니다.
+                        </div>
+                        <div id="test-result-stats" class="hidden grid grid-cols-3 gap-2 text-center pt-2 border-t border-slate-200">
+                            <div class="bg-emerald-50 border border-emerald-100 p-2 rounded">
+                                <span class="block text-[10px] text-emerald-600">평균 응답속도</span>
+                                <span class="text-sm font-bold text-emerald-700">1.2초</span>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-100 p-2 rounded">
+                                <span class="block text-[10px] text-emerald-600">보안 취약점</span>
+                                <span class="text-sm font-bold text-emerald-700">Clean</span>
+                            </div>
+                            <div class="bg-emerald-50 border border-emerald-100 p-2 rounded">
+                                <span class="block text-[10px] text-emerald-600">포맷 일치율</span>
+                                <span class="text-sm font-bold text-emerald-700">100%</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="executeMockRegistrationTest()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 font-semibold text-xs text-white rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                        <i data-lucide="play-circle" class="w-4 h-4"></i> 등록 사전 자가 테스트 실행
+                    </button>
+                </div>
+
+                <!-- STEP 5: Request Review -->
+                <div id="reg-step-content-5" class="space-y-4 hidden">
+                    <p class="text-xs text-slate-500">
+                        공식 인증(Verified / Official) 승인을 요청할 심사 라인을 지정해주세요.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">1차 업무 소유팀 승인자</label>
+                            <input type="text" value="정인식 본부장 / 경영기획부" readonly class="w-full bg-slate-100 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">2차 AX/DX 추진 TF 심사팀</label>
+                            <input type="text" value="오명철 그룹장 / DX추진TF팀" readonly class="w-full bg-slate-100 border border-slate-200 rounded-lg p-2.5 text-xs text-slate-500">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-xs font-semibold text-slate-500 mb-1">검토 보안 서약서 동의</label>
+                            <label class="flex items-start gap-2 bg-slate-50 p-3 rounded-lg border border-slate-200 cursor-pointer">
+                                <input type="checkbox" id="reg-agreement" class="mt-0.5 rounded text-blue-600 bg-slate-50 border-slate-300">
+                                <span class="text-[11px] text-slate-500 leading-tight">
+                                    본인은 사내 지식 자산 규정에 부합하는 양질의 AI 자산을 배포하며, 등록하는 스킬의 프롬프트 및 로직 상 유해한 컨텐츠나 영업 비밀이 누출되는 문장이 배제되었음을 적극 서약합니다.
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 6: Complete & Deploy -->
+                <div id="reg-step-content-6" class="space-y-4 text-center py-6 hidden">
+                    <div class="inline-flex p-3 bg-emerald-50 rounded-full border border-emerald-200 text-emerald-600 mb-2">
+                        <i data-lucide="check-circle" class="w-12 h-12"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800">AI 업무 스킬 등록 신청 준비 완료!</h4>
+                    <p class="text-xs text-slate-500 max-w-md mx-auto">
+                        모든 기술 검증 및 보안 검토 서약이 마쳐졌습니다. 등록을 완료하면 즉시 '대기 상태(Draft)'로 마켓플레이스 사유 영역에 업로드되며 심사가 시작됩니다.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Modal Footer Controls -->
+            <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+                <button type="button" id="reg-btn-prev" onclick="handleRegStep(-1)" disabled class="px-4 py-2 bg-slate-200 hover:bg-slate-300 disabled:opacity-40 text-slate-700 font-semibold text-xs rounded-lg transition-colors flex items-center gap-1">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> 이전 단계
+                </button>
+                <button type="button" id="reg-btn-next" onclick="handleRegStep(1)" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded-lg transition-colors flex items-center gap-1 shadow-sm">
+                    다음 단계 <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOCK DATA (SKILLS AND DETAILS) IN-MEMORY STORAGE -->
+
+    <!-- CORE GUI LOGIC AND ROUTING JAVASCRIPT -->
+    <script src="./src/data/mockSkills.js"></script>
+    <script src="./src/data/mockFileContents.js"></script>
+    <script src="./src/app.js"></script>
+</body>
+</html>

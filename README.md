@@ -1,16 +1,42 @@
 # AI Skill Marketplace
 
-Initial UI prototype for an AI skill marketplace.
+AI skill marketplace prototype for registering, browsing, and testing reusable work skills.
 
-## Current status
+## Project Structure
 
-- Single-file HTML prototype: `AI_skill_marketplace.html`
-- Static UI only
-- Planned to evolve into a working application over time
+```text
+backend/
+  data/
+    skills.json          # Backend seed data for API responses
+  server.js              # Node HTTP server and API placeholders
+frontend/
+  index.html             # App shell and markup
+  src/
+    app.js               # UI state, filtering, detail view, modal flow
+    styles.css           # Shared styles extracted from the prototype
+    data/
+      mockSkills.js      # Frontend mock skill catalog
+      mockFileContents.js # Frontend mock detail/file contents
+tests/
+  project-structure.test.js
+```
 
-## Next steps
+## Run Locally
 
-- Split the UI into an app structure
-- Add real data and state management
-- Add backend APIs for skill registration, search, and execution
-- Add authentication and deployment configuration
+```bash
+npm start
+```
+
+Open `http://localhost:5173`.
+
+## Test
+
+```bash
+npm test
+```
+
+## Current Status
+
+- Frontend and backend are separated.
+- The current UI still uses frontend mock data for interaction speed.
+- The backend already serves `GET /api/health` and `GET /api/skills` as stable starting points for future real data integration.

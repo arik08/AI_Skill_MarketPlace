@@ -1,0 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+body {
+    font-family: 'Inter', 'Noto Sans KR', sans-serif;
+}
+
+.keep-korean {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+}
+        /* Custom Scrollbar for VS Code Light style */
+        .vscode-scrollbar::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .vscode-scrollbar::-webkit-scrollbar-track {
+            background: #f3f3f3;
+        }
+        .vscode-scrollbar::-webkit-scrollbar-thumb {
+            background: #cdcdcd;
+            border-radius: 4px;
+        }
+        .vscode-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #b0b0b0;
+        }
