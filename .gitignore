@@ -1,0 +1,18 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Runtime/dependency folders for future app upgrades
+node_modules/
+dist/
+build/
+.next/
+__pycache__/
+*.pyc
+
+# Local environment files
+.env
+.env.*
+!.env.example
