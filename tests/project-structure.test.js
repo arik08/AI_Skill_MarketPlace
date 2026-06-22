@@ -64,6 +64,22 @@ describe('project structure', () => {
     assert.match(html, /id="btn-edit-file"/);
     assert.match(html, /id="btn-save-file"/);
     assert.match(html, /id="editor-mode-label"/);
+    assert.match(html, /id="nav-admin-mode"/);
+    assert.match(html, /id="nav-admin-mode"[^>]*aria-label="관리자 모드"[^>]*h-8 w-8/);
+    assert.match(html, /id="admin-modal"/);
+    assert.match(html, /id="admin-password-input"/);
+    assert.match(html, /openAdminMode\(\)/);
+    assert.match(html, /submitAdminMode\(event\)/);
+    assert.match(app, /const ADMIN_ACCESS_PASSWORD = '1'/);
+    assert.match(app, /let isAdminMode = sessionStorage\.getItem\(ADMIN_MODE_STORAGE_KEY\) === 'true'/);
+    assert.match(app, /function openAdminMode\(\)/);
+    assert.match(app, /function closeAdminModal\(\)/);
+    assert.match(app, /function submitAdminMode\(event\)/);
+    assert.doesNotMatch(app, /window\.prompt|prompt\(/);
+    assert.doesNotMatch(app, /Admin ON/);
+    assert.match(app, /button\.setAttribute\('aria-pressed', String\(isAdminMode\)\)/);
+    assert.match(app, /if \(isAdminMode\) return true/);
+    assert.match(app, /adminPassword: isAdminMode \? ADMIN_ACCESS_PASSWORD : undefined/);
     assert.match(app, /function canCurrentAccountEditSkill\(skill\)/);
     assert.match(app, /function startFileEdit\(\)/);
     assert.match(app, /function saveFileEdit\(\)/);
@@ -402,6 +418,18 @@ Use this skill to prepare a concise daily business brief.
       assert.equal(result.filePath, 'SKILL.md');
       assert.equal(result.content, '# Edited skill text\n');
       assert.equal(await readFile(path.join(tempRoot, created.source_path, 'SKILL.md'), 'utf8'), '# Edited skill text\n');
+
+      const adminResult = await updateSkillFile({
+        skillId: created.id,
+        accountId: 'kim-user',
+        accountName: '김사용 과장',
+        adminPassword: '1',
+        filePath: 'SKILL.md',
+        content: '# Admin edited skill text\n'
+      }, tempRoot);
+
+      assert.equal(adminResult.content, '# Admin edited skill text\n');
+      assert.equal(await readFile(path.join(tempRoot, created.source_path, 'SKILL.md'), 'utf8'), '# Admin edited skill text\n');
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }

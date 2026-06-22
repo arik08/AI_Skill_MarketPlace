@@ -5,10 +5,13 @@ const CURRENT_ACCOUNT = {
     name: '오명철 과장',
     team: '경영기획DX추진TF팀'
 };
+const ADMIN_ACCESS_PASSWORD = '1';
+const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
 
 // Global States
         let currentSkills = [];
         let installedSkillIds = new Set();
+        let isAdminMode = sessionStorage.getItem(ADMIN_MODE_STORAGE_KEY) === 'true';
         const defaultFilters = {
             category: '전체',
             type: '전체',
@@ -56,6 +59,7 @@ const CURRENT_ACCOUNT = {
             // Build filter panels
             buildFilterUI();
             syncCatalogControls();
+            updateAdminModeControls();
             
             // Initial Render of cards
             applyFilterAndSort();
@@ -178,6 +182,77 @@ const CURRENT_ACCOUNT = {
                 // Refresh Lucide in Details Mode
                 lucide.createIcons();
             }
+        }
+
+        function openAdminMode() {
+            if (isAdminMode) {
+                isAdminMode = false;
+                sessionStorage.removeItem(ADMIN_MODE_STORAGE_KEY);
+                updateAdminModeControls();
+                updateEditorControls();
+                showToast('Admin 모드를 종료했습니다.', 'info');
+                return;
+            }
+
+            const modal = document.getElementById('admin-modal');
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('admin-password-error');
+
+            if (!modal || !input || !error) return;
+
+            input.value = '';
+            error.classList.add('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            input.focus();
+            lucide.createIcons({ scope: modal });
+        }
+
+        function closeAdminModal() {
+            const modal = document.getElementById('admin-modal');
+            if (!modal) return;
+
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function submitAdminMode(event) {
+            event.preventDefault();
+
+            const input = document.getElementById('admin-password-input');
+            const error = document.getElementById('admin-password-error');
+
+            if (!input || !error) return;
+
+            if (input.value !== ADMIN_ACCESS_PASSWORD) {
+                error.classList.remove('hidden');
+                input.select();
+                return;
+            }
+
+            isAdminMode = true;
+            sessionStorage.setItem(ADMIN_MODE_STORAGE_KEY, 'true');
+            closeAdminModal();
+            updateAdminModeControls();
+            updateEditorControls();
+            showToast('Admin 모드가 활성화되었습니다.', 'success');
+        }
+
+        function updateAdminModeControls() {
+            const button = document.getElementById('nav-admin-mode');
+            if (!button) return;
+
+            button.classList.toggle('bg-slate-100', isAdminMode);
+            button.classList.toggle('text-amber-600', isAdminMode);
+            button.classList.toggle('shadow-inner', isAdminMode);
+            button.classList.toggle('text-slate-500', !isAdminMode);
+            button.setAttribute('aria-pressed', String(isAdminMode));
+            button.setAttribute('title', isAdminMode ? '관리자 모드 켜짐' : '관리자 모드');
+            button.setAttribute('aria-label', isAdminMode ? '관리자 모드 켜짐' : '관리자 모드');
+            button.innerHTML = `
+                <i data-lucide="${isAdminMode ? 'shield-check' : 'key-round'}" class="w-4 h-4"></i>
+            `;
+            lucide.createIcons({ scope: button });
         }
 
         // Render dynamic Filters Panel
@@ -981,6 +1056,7 @@ const CURRENT_ACCOUNT = {
 
         function canCurrentAccountEditSkill(skill) {
             if (!skill) return false;
+            if (isAdminMode) return true;
 
             const ownedByName = skill.owner === CURRENT_ACCOUNT.name;
             const forkedByAccount = skill.forked_by_account_id === CURRENT_ACCOUNT.id;
@@ -1003,6 +1079,8 @@ const CURRENT_ACCOUNT = {
 
             modeLabel.textContent = isEditingFile
                 ? 'VIEW MODE: TEXT EDIT'
+                : isAdminMode
+                    ? 'VIEW MODE: ADMIN EDIT'
                 : isMarkdownFile(currentFilePath)
                     ? `VIEW MODE: ${markdownViewMode === 'source' ? 'RAW MARKDOWN' : 'RENDERED MARKDOWN'}`
                     : canEdit ? 'VIEW MODE: EDITABLE PREVIEW' : 'VIEW MODE: READ-ONLY PREVIEW';
@@ -1122,6 +1200,7 @@ const CURRENT_ACCOUNT = {
                     body: JSON.stringify({
                         accountId: CURRENT_ACCOUNT.id,
                         accountName: CURRENT_ACCOUNT.name,
+                        adminPassword: isAdminMode ? ADMIN_ACCESS_PASSWORD : undefined,
                         filePath: currentFilePath,
                         content: textarea.value
                     })
