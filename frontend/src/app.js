@@ -1,33 +1,122 @@
 const MOCK_SKILLS = window.MOCK_SKILLS || [];
 const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
+const CURRENT_ACCOUNT = {
+    id: 'oh-myeongcheol',
+    name: '오명철 과장',
+    team: '경영기획DX추진TF팀'
+};
 
 // Global States
-        let currentSkills = [...MOCK_SKILLS];
-        let activeFilters = {
+        let currentSkills = [];
+        let installedSkillIds = new Set();
+        const defaultFilters = {
             category: '전체',
             type: '전체',
             status: '전체',
             visibility: '전체',
-            searchQuery: ''
+            tag: '',
+            searchQuery: '',
+            myInstalled: false,
+            myDrafts: false
         };
+        let activeFilters = { ...defaultFilters };
         let currentSort = 'recommended';
-        let activeSkillId = 'skill-01'; // Default selected for Detail page
+        let catalogViewMode = 'detail';
+        let activeSkillId = null; // Default selected after the catalog loads.
         let currentRegStep = 1;
+        let currentFilePath = '';
+        let currentFileContent = '';
+        let markdownViewMode = 'rendered';
+        let isEditingFile = false;
+        let isSavingFile = false;
+        const personalFilterPalettes = {
+            installed: {
+                base: { bg: '#e0e7ff', border: '#818cf8', text: '#3730a3', badgeText: '#3730a3', shadow: '0 4px 12px rgba(79, 70, 229, 0.12)' },
+                hover: { bg: '#4f46e5', border: '#4f46e5', text: '#ffffff', badgeText: '#3730a3', shadow: '0 8px 18px rgba(79, 70, 229, 0.2)' },
+                active: { bg: '#4f46e5', border: '#4f46e5', text: '#ffffff', badgeText: '#4338ca', shadow: '0 8px 18px rgba(79, 70, 229, 0.18)' },
+                activeHover: { bg: '#4338ca', border: '#4338ca', text: '#ffffff', badgeText: '#4338ca', shadow: '0 8px 18px rgba(67, 56, 202, 0.2)' }
+            },
+            drafts: {
+                base: { bg: '#d1fae5', border: '#34d399', text: '#065f46', badgeText: '#065f46', shadow: '0 4px 12px rgba(5, 150, 105, 0.12)' },
+                hover: { bg: '#059669', border: '#059669', text: '#ffffff', badgeText: '#065f46', shadow: '0 8px 18px rgba(5, 150, 105, 0.2)' },
+                active: { bg: '#059669', border: '#059669', text: '#ffffff', badgeText: '#047857', shadow: '0 8px 18px rgba(5, 150, 105, 0.18)' },
+                activeHover: { bg: '#047857', border: '#047857', text: '#ffffff', badgeText: '#047857', shadow: '0 8px 18px rgba(4, 120, 87, 0.2)' }
+            }
+        };
 
         // On Page Load
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             // Initialize Lucide Icons
             lucide.createIcons();
+
+            currentSkills = await loadSkillCatalog();
+            installedSkillIds = await loadInstalledSkillIds();
+            hydrateCatalogStateFromUrl();
             
             // Build filter panels
             buildFilterUI();
+            syncCatalogControls();
             
             // Initial Render of cards
             applyFilterAndSort();
+            history.replaceState(createCatalogHistoryState(), '', createCatalogUrl());
 
-            // Setup Details for default skill on startup
-            loadSkillDetail('skill-01');
+            // Setup Details for the first real skill on startup.
+            activeSkillId = currentSkills[0]?.id || null;
+            if (activeSkillId) {
+                loadSkillDetail(activeSkillId);
+            }
         });
+
+        window.addEventListener('popstate', handleCatalogHistoryNavigation);
+
+        async function loadSkillCatalog() {
+            try {
+                const response = await fetch('/api/skills');
+                if (!response.ok) {
+                    throw new Error(`Skill API returned ${response.status}`);
+                }
+                const skills = await response.json();
+                if (!Array.isArray(skills) || skills.length === 0) {
+                    throw new Error('Skill API returned an empty catalog');
+                }
+                return skills;
+            } catch (error) {
+                console.warn('Falling back to local skill catalog.', error);
+                return [...MOCK_SKILLS];
+            }
+        }
+
+        function getLocalInstallStorageKey() {
+            return `skill-marketplace:installations:${CURRENT_ACCOUNT.id}`;
+        }
+
+        function readLocalInstalledSkillIds() {
+            try {
+                const parsed = JSON.parse(localStorage.getItem(getLocalInstallStorageKey()) || '[]');
+                return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+            } catch (error) {
+                return [];
+            }
+        }
+
+        function writeLocalInstalledSkillIds(skillIds) {
+            localStorage.setItem(getLocalInstallStorageKey(), JSON.stringify([...skillIds]));
+        }
+
+        async function loadInstalledSkillIds() {
+            try {
+                const response = await fetch(`/api/installations?accountId=${encodeURIComponent(CURRENT_ACCOUNT.id)}`);
+                if (!response.ok) {
+                    throw new Error(`Installations API returned ${response.status}`);
+                }
+                const payload = await response.json();
+                return new Set(Array.isArray(payload.skillIds) ? payload.skillIds : []);
+            } catch (error) {
+                console.warn('Falling back to local installation state.', error);
+                return new Set(readLocalInstalledSkillIds());
+            }
+        }
 
         // Helper to show modern Toast messages without using window.alert
         function showToast(message, type = 'success') {
@@ -94,7 +183,7 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
         // Render dynamic Filters Panel
         function buildFilterUI() {
             // Setup Categories
-            const categories = ['전체', '투자관리', '사업관리', '경영기획', '재무', '구매', '설비', '법무', 'HR'];
+            const categories = ['전체', '공통', '투자관리', '사업관리', '경영기획', '재무', '구매', '설비', '법무', 'HR'];
             const catContainer = document.getElementById('filter-category');
             catContainer.innerHTML = categories.map(cat => `
                 <button onclick="setFilter('category', '${cat}')" class="filter-btn text-left text-xs px-3 py-2 rounded-lg transition-all ${activeFilters.category === cat ? 'bg-blue-50 text-blue-700 border border-blue-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
@@ -135,28 +224,69 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
         // Apply filters dynamically and display
         function setFilter(key, value) {
             activeFilters[key] = value;
-            buildFilterUI();
-            applyFilterAndSort();
+            refreshCatalogResults();
+            pushCatalogHistory();
+        }
+
+        function setTagFilter(tag) {
+            activeFilters.tag = tag;
+            refreshCatalogResults();
+            pushCatalogHistory();
+            showToast(`#${tag} 태그 스킬만 표시합니다.`, 'info');
         }
 
         function resetFilters() {
-            activeFilters = {
-                category: '전체',
-                type: '전체',
-                status: '전체',
-                visibility: '전체',
-                searchQuery: ''
-            };
-            document.getElementById('main-search-input').value = '';
-            buildFilterUI();
-            applyFilterAndSort();
+            activeFilters = { ...defaultFilters };
+            refreshCatalogResults();
+            pushCatalogHistory();
             showToast('필터가 모두 초기화되었습니다.', 'info');
+        }
+
+        function showMyInstalledSkills() {
+            const willEnable = !activeFilters.myInstalled;
+            activeFilters.myInstalled = willEnable;
+            activeFilters.myDrafts = false;
+            refreshCatalogResults();
+            pushCatalogHistory();
+            showToast(
+                willEnable
+                    ? `${CURRENT_ACCOUNT.name} 계정으로 설치한 스킬만 표시합니다.`
+                    : '내 설치 스킬 필터를 해제했습니다.',
+                'info'
+            );
+        }
+
+        function showMyDraftSkills() {
+            const willEnable = !activeFilters.myDrafts;
+            activeFilters.myInstalled = false;
+            activeFilters.myDrafts = willEnable;
+            refreshCatalogResults();
+            pushCatalogHistory();
+            showToast(
+                willEnable
+                    ? `${CURRENT_ACCOUNT.name} 계정의 Draft/Fork 스킬만 표시합니다.`
+                    : '내 Draft/Fork 필터를 해제했습니다.',
+                'info'
+            );
+        }
+
+        function isCurrentAccountDraftSkill(skill) {
+            if (!skill) return false;
+
+            const isDraft = skill.status === 'Draft';
+            const forkedByAccount = skill.forked_by_account_id === CURRENT_ACCOUNT.id;
+            const ownDraft = typeof skill.source_path === 'string'
+                && skill.source_path.startsWith('drafts/')
+                && skill.owner === CURRENT_ACCOUNT.name;
+
+            return isDraft && (forkedByAccount || ownDraft);
         }
 
         function handleSearch() {
             const inputVal = document.getElementById('main-search-input').value.trim();
             activeFilters.searchQuery = inputVal;
-            applyFilterAndSort();
+            refreshCatalogResults();
+            pushCatalogHistory();
             if (inputVal) {
                 showToast(`"${inputVal}" 검색 결과를 반영했습니다.`, 'info');
             }
@@ -195,24 +325,39 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                 });
             }
 
-            // 2. Category Filter
+            // 2. Current account installation filter
+            if (activeFilters.myInstalled) {
+                filtered = filtered.filter(item => installedSkillIds.has(item.id));
+            }
+
+            // 3. Current account draft/fork filter
+            if (activeFilters.myDrafts) {
+                filtered = filtered.filter(isCurrentAccountDraftSkill);
+            }
+
+            // 4. Category Filter
             if (activeFilters.category !== '전체') {
                 filtered = filtered.filter(item => item.category === activeFilters.category);
             }
 
-            // 3. Type Filter
+            // 5. Type Filter
             if (activeFilters.type !== '전체') {
                 filtered = filtered.filter(item => item.type === activeFilters.type);
             }
 
-            // 4. Status Filter
+            // 6. Status Filter
             if (activeFilters.status !== '전체') {
                 filtered = filtered.filter(item => item.status === activeFilters.status);
             }
 
-            // 5. Visibility Filter
+            // 7. Visibility Filter
             if (activeFilters.visibility !== '전체') {
                 filtered = filtered.filter(item => item.visibility === activeFilters.visibility);
+            }
+
+            // 8. Exact Tag Filter
+            if (activeFilters.tag) {
+                filtered = filtered.filter(item => item.tags.includes(activeFilters.tag));
             }
 
             // Apply Sorting
@@ -246,12 +391,18 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                         type: '유형',
                         status: '상태',
                         visibility: '공개',
-                        searchQuery: '검색어'
+                        tag: '태그',
+                        searchQuery: '검색어',
+                        myInstalled: '설치',
+                        myDrafts: '소유'
                     };
+                    const displayValue = key === 'myInstalled'
+                        ? '내 설치 스킬'
+                        : key === 'myDrafts' ? '내 Draft/Fork' : value;
                     badgesHTML += `
                         <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-white text-slate-600 rounded-full text-xs border border-slate-200 shadow-sm">
                             <span class="text-slate-400 text-[10px] uppercase font-bold">${labelMapping[key]}:</span>
-                            <strong>${value}</strong>
+                            <strong>${key === 'tag' ? `#${value}` : displayValue}</strong>
                             <button onclick="clearSpecificFilter('${key}')" class="text-slate-400 hover:text-slate-800 transition-colors">
                                 <i data-lucide="x" class="w-3 h-3"></i>
                             </button>
@@ -265,17 +416,215 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
         }
 
         function clearSpecificFilter(key) {
-            if (key === 'searchQuery') {
-                document.getElementById('main-search-input').value = '';
-            }
-            activeFilters[key] = (key === 'searchQuery') ? '' : '전체';
-            buildFilterUI();
-            applyFilterAndSort();
+            activeFilters[key] = defaultFilters[key];
+            refreshCatalogResults();
+            pushCatalogHistory();
         }
 
         function handleSort() {
             currentSort = document.getElementById('sort-select').value;
             applyFilterAndSort();
+            pushCatalogHistory();
+        }
+
+        function setCatalogViewMode(mode) {
+            if (!['detail', 'summary'].includes(mode)) return;
+
+            catalogViewMode = mode;
+            syncCatalogControls();
+            applyFilterAndSort();
+            pushCatalogHistory();
+        }
+
+        function refreshCatalogResults() {
+            buildFilterUI();
+            syncCatalogControls();
+            applyFilterAndSort();
+        }
+
+        function applyPersonalFilterButtonStyle(button, colors) {
+            button.style.backgroundColor = colors.bg;
+            button.style.borderColor = colors.border;
+            button.style.color = colors.text;
+            button.style.boxShadow = colors.shadow;
+
+            const countBadge = button.querySelector('.personal-filter-count');
+            if (countBadge) {
+                countBadge.style.backgroundColor = '#ffffff';
+                countBadge.style.borderColor = 'rgba(255, 255, 255, 0.72)';
+                countBadge.style.color = colors.badgeText;
+            }
+        }
+
+        function syncPersonalFilterButton(button, isActive, palette) {
+            if (!button) return;
+
+            button.classList.toggle('is-active', isActive);
+            applyPersonalFilterButtonStyle(button, isActive ? palette.active : palette.base);
+            button.onmouseenter = () => applyPersonalFilterButtonStyle(button, isActive ? palette.activeHover : palette.hover);
+            button.onmouseleave = () => applyPersonalFilterButtonStyle(button, isActive ? palette.active : palette.base);
+        }
+
+        function syncCatalogControls() {
+            const searchInput = document.getElementById('main-search-input');
+            if (searchInput) searchInput.value = activeFilters.searchQuery;
+
+            const sortSelect = document.getElementById('sort-select');
+            if (sortSelect) sortSelect.value = currentSort;
+
+            const detailModeButton = document.getElementById('view-mode-detail');
+            const summaryModeButton = document.getElementById('view-mode-summary');
+            for (const [button, mode] of [[detailModeButton, 'detail'], [summaryModeButton, 'summary']]) {
+                if (!button) continue;
+
+                const isActive = catalogViewMode === mode;
+                button.classList.toggle('bg-white', isActive);
+                button.classList.toggle('text-slate-900', isActive);
+                button.classList.toggle('shadow-sm', isActive);
+                button.classList.toggle('text-slate-500', !isActive);
+                button.classList.toggle('hover:text-slate-900', !isActive);
+                button.classList.toggle('hover:bg-white/70', !isActive);
+            }
+
+            const myInstalledButton = document.getElementById('my-installed-filter-button');
+            if (myInstalledButton) {
+                myInstalledButton.classList.toggle('bg-indigo-600', activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('text-white', activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('border-indigo-600', activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('hover:bg-indigo-700', activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('hover:border-indigo-700', activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('bg-indigo-50', !activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('text-indigo-700', !activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('border-indigo-100', !activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('hover:bg-indigo-600', !activeFilters.myInstalled);
+                myInstalledButton.classList.toggle('hover:border-indigo-600', !activeFilters.myInstalled);
+                syncPersonalFilterButton(myInstalledButton, activeFilters.myInstalled, personalFilterPalettes.installed);
+            }
+
+            const myInstalledCount = document.getElementById('my-installed-count');
+            if (myInstalledCount) myInstalledCount.textContent = installedSkillIds.size;
+
+            const myDraftsButton = document.getElementById('my-drafts-filter-button');
+            if (myDraftsButton) {
+                myDraftsButton.classList.toggle('bg-emerald-600', activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('text-white', activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('border-emerald-600', activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('hover:bg-emerald-700', activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('hover:border-emerald-700', activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('bg-emerald-50', !activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('text-emerald-700', !activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('border-emerald-200', !activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('hover:bg-emerald-600', !activeFilters.myDrafts);
+                myDraftsButton.classList.toggle('hover:border-emerald-600', !activeFilters.myDrafts);
+                syncPersonalFilterButton(myDraftsButton, activeFilters.myDrafts, personalFilterPalettes.drafts);
+            }
+
+            const myDraftsCount = document.getElementById('my-drafts-count');
+            if (myDraftsCount) myDraftsCount.textContent = currentSkills.filter(isCurrentAccountDraftSkill).length;
+        }
+
+        function hydrateCatalogStateFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            activeFilters = { ...defaultFilters };
+
+            const queryMap = {
+                category: 'category',
+                type: 'type',
+                status: 'status',
+                visibility: 'visibility',
+                tag: 'tag',
+                searchQuery: 'q',
+                myInstalled: 'installed',
+                myDrafts: 'drafts'
+            };
+
+            for (const [filterKey, queryKey] of Object.entries(queryMap)) {
+                if (params.has(queryKey)) {
+                    activeFilters[filterKey] = filterKey === 'myInstalled'
+                        ? params.get(queryKey) === 'mine'
+                        : filterKey === 'myDrafts' ? params.get(queryKey) === 'mine'
+                        : params.get(queryKey) || defaultFilters[filterKey];
+                }
+            }
+
+            currentSort = params.get('sort') || 'recommended';
+            catalogViewMode = params.get('view') === 'summary' ? 'summary' : 'detail';
+            normalizePersonalFilterMode();
+        }
+
+        function handleCatalogHistoryNavigation(event) {
+            const catalogState = event.state?.catalog;
+
+            if (catalogState) {
+                activeFilters = { ...defaultFilters, ...catalogState.filters };
+                currentSort = catalogState.sort || 'recommended';
+                catalogViewMode = catalogState.viewMode || 'detail';
+                normalizePersonalFilterMode();
+            } else {
+                hydrateCatalogStateFromUrl();
+            }
+
+            refreshCatalogResults();
+        }
+
+        function normalizePersonalFilterMode() {
+            if (activeFilters.myInstalled && activeFilters.myDrafts) {
+                activeFilters.myInstalled = false;
+            }
+        }
+
+        function createCatalogHistoryState() {
+            return {
+                catalog: {
+                    filters: { ...activeFilters },
+                    sort: currentSort,
+                    viewMode: catalogViewMode
+                }
+            };
+        }
+
+        function createCatalogUrl() {
+            const params = new URLSearchParams();
+            const queryMap = {
+                category: 'category',
+                type: 'type',
+                status: 'status',
+                visibility: 'visibility',
+                tag: 'tag',
+                searchQuery: 'q',
+                myInstalled: 'installed',
+                myDrafts: 'drafts'
+            };
+
+            for (const [filterKey, queryKey] of Object.entries(queryMap)) {
+                const value = activeFilters[filterKey];
+                if (value && value !== defaultFilters[filterKey]) {
+                    params.set(queryKey, filterKey === 'myInstalled' || filterKey === 'myDrafts' ? 'mine' : value);
+                }
+            }
+
+            if (currentSort !== 'recommended') {
+                params.set('sort', currentSort);
+            }
+
+            if (catalogViewMode !== 'detail') {
+                params.set('view', catalogViewMode);
+            }
+
+            const query = params.toString();
+            return `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`;
+        }
+
+        function pushCatalogHistory() {
+            const nextUrl = createCatalogUrl();
+            const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+            if (nextUrl === currentUrl) {
+                history.replaceState(createCatalogHistoryState(), '', createCatalogUrl());
+                return;
+            }
+
+            history.pushState(createCatalogHistoryState(), '', createCatalogUrl());
         }
 
         // Render Skill Cards to GRID
@@ -296,6 +645,11 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                 return;
             }
 
+            if (catalogViewMode === 'summary') {
+                renderSummarySkillCards(grid, skills);
+                return;
+            }
+
             grid.innerHTML = skills.map(skill => {
                 // Status Badge styling for light theme
                 let badgeClass = 'bg-slate-100 text-slate-600 border-slate-250';
@@ -303,9 +657,10 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                 if (skill.status === 'Verified') badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
                 if (skill.status === 'Beta') badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
                 if (skill.status === 'Draft') badgeClass = 'bg-slate-100 text-slate-500 border-slate-200';
+                const isInstalled = installedSkillIds.has(skill.id);
 
                 return `
-                    <div class="bg-white hover:bg-slate-50/50 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 transition-all flex flex-col justify-between group relative overflow-hidden shadow-sm hover:shadow-md">
+                    <div data-skill-id="${skill.id}" class="bg-white hover:bg-slate-50/50 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 transition-all flex flex-col justify-between group relative overflow-hidden shadow-sm hover:shadow-md">
                         
                         <!-- Header Line with Icon / Status Badge -->
                         <div>
@@ -318,6 +673,7 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                                         <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">${skill.type}</span>
                                         <h3 class="font-bold text-slate-800 transition-colors text-sm sm:text-base flex items-center gap-1.5">
                                             ${skill.name}
+                                            ${isInstalled ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">설치됨</span>' : ''}
                                         </h3>
                                     </div>
                                 </div>
@@ -334,7 +690,7 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                             <!-- Tag pills -->
                             <div class="flex flex-wrap gap-1 mb-4">
                                 ${skill.tags.slice(0, 4).map(tag => `
-                                    <span class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md hover:bg-slate-200 transition-colors cursor-pointer">#${tag}</span>
+                                    <button type="button" onclick="setTagFilter('${escapeJsString(tag)}')" class="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md hover:bg-slate-200 hover:text-slate-800 transition-colors cursor-pointer">#${escapeHTML(tag)}</button>
                                 `).join('')}
                             </div>
                         </div>
@@ -357,8 +713,8 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
 
                             <!-- Interactive Buttons inside Card -->
                             <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="quickAction('${skill.id}', 'install')" class="w-full py-1.5 bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 font-semibold text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center gap-1 border border-slate-200/50">
-                                    <i data-lucide="download" class="w-3 h-3"></i> 설치
+                                <button onclick="quickAction('${skill.id}', 'install')" class="w-full py-1.5 ${isInstalled ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 border-slate-200/50'} font-semibold text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center gap-1 border">
+                                    <i data-lucide="${isInstalled ? 'package-check' : 'download'}" class="w-3 h-3"></i> ${isInstalled ? '설치됨' : '설치'}
                                 </button>
                                 <button onclick="viewSkillDetails('${skill.id}')" class="w-full py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold text-xs rounded-lg transition-all active:scale-95 border border-blue-200/50 hover:border-transparent flex items-center justify-center gap-1">
                                     상세보기 <i data-lucide="chevron-right" class="w-3 h-3"></i>
@@ -373,16 +729,91 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
             lucide.createIcons();
         }
 
+        function getStatusBadgeClass(status) {
+            if (status === 'Official') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+            if (status === 'Verified') return 'bg-blue-50 text-blue-700 border-blue-200';
+            if (status === 'Beta') return 'bg-amber-50 text-amber-700 border-amber-200';
+            if (status === 'Draft') return 'bg-slate-100 text-slate-500 border-slate-200';
+            return 'bg-slate-100 text-slate-600 border-slate-200';
+        }
+
+        function renderSummarySkillCards(grid, skills) {
+            grid.innerHTML = skills.map(skill => {
+                const isInstalled = installedSkillIds.has(skill.id);
+                const badgeClass = getStatusBadgeClass(skill.status);
+
+                return `
+                    <div data-skill-id="${skill.id}" class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4 transition-all shadow-sm hover:shadow-md">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">${skill.type}</span>
+                                <h3 class="font-bold text-slate-800 text-sm leading-snug flex flex-wrap items-center gap-1.5 keep-korean">
+                                    ${skill.name}
+                                    ${isInstalled ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">설치됨</span>' : ''}
+                                </h3>
+                            </div>
+                            <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
+                                ${skill.status}
+                            </span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 mt-4">
+                            <button onclick="quickAction('${skill.id}', 'install')" class="w-full py-1.5 ${isInstalled ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 border-slate-200/50'} font-semibold text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center border">
+                                ${isInstalled ? '설치됨' : '설치'}
+                            </button>
+                            <button onclick="viewSkillDetails('${skill.id}')" class="w-full py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold text-xs rounded-lg transition-all active:scale-95 border border-blue-200/50 hover:border-transparent flex items-center justify-center">
+                                상세보기
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
         // Quick download simulator from card
-        function quickAction(skillId, type) {
+        async function quickAction(skillId, type) {
             const skill = currentSkills.find(s => s.id === skillId);
             if (!skill) return;
 
             if (type === 'install') {
-                skill.downloads++;
-                applyFilterAndSort();
-                showToast(`[${skill.name}] 스킬이 개인 AI 워크스페이스에 설치되었습니다!`, 'success');
+                await installSkillForCurrentAccount(skill);
             }
+        }
+
+        async function installSkillForCurrentAccount(skill) {
+            const wasInstalled = installedSkillIds.has(skill.id);
+
+            try {
+                const response = await fetch('/api/installations', {
+                    method: 'POST',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        accountId: CURRENT_ACCOUNT.id,
+                        skillId: skill.id
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Installations API returned ${response.status}`);
+                }
+
+                const payload = await response.json();
+                installedSkillIds = new Set(Array.isArray(payload.skillIds) ? payload.skillIds : [...installedSkillIds, skill.id]);
+            } catch (error) {
+                console.warn('Falling back to local installation write.', error);
+                installedSkillIds.add(skill.id);
+                writeLocalInstalledSkillIds(installedSkillIds);
+            }
+
+            if (!wasInstalled) {
+                skill.downloads++;
+            }
+
+            activeFilters.myInstalled = true;
+            refreshCatalogResults();
+            pushCatalogHistory();
+            updateDetailInstallButton();
+            showToast(`[${skill.name}] 스킬이 ${CURRENT_ACCOUNT.name} 계정에 설치되었습니다.`, 'success');
         }
 
         // View Mode 2: Skill Explorer Loading
@@ -408,6 +839,7 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
             document.getElementById('detail-run-cnt').textContent = skill.runs.toLocaleString();
             document.getElementById('detail-like-cnt').textContent = skill.likes;
             document.getElementById('detail-success-rate').textContent = `${skill.success_rate}%`;
+            updateDetailInstallButton(skill.id);
 
             // Status Badge (Light theme adjusted)
             const statusBadge = document.getElementById('detail-status-badge');
@@ -428,160 +860,344 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
             // Render Explorer Tree (VS Code-like file structure)
             renderExplorerTree(skill);
 
-            // Load initial file (Default to README.md)
-            loadWorkspaceFile('readme', 'README.md', 'file-text');
+            // Load initial file (real Codex skill entrypoint)
+            loadWorkspaceFileByPath(skill.entrypoint || 'SKILL.md');
+        }
+
+        function updateDetailInstallButton(skillId = activeSkillId) {
+            const button = document.getElementById('btn-install');
+            if (!button || !skillId) return;
+
+            const isInstalled = installedSkillIds.has(skillId);
+            button.innerHTML = `
+                <i data-lucide="${isInstalled ? 'package-check' : 'download'}" class="w-3.5 h-3.5"></i> ${isInstalled ? '설치됨' : '설치하기'}
+            `;
+            button.classList.toggle('bg-indigo-600', !isInstalled);
+            button.classList.toggle('hover:bg-indigo-500', !isInstalled);
+            button.classList.toggle('bg-slate-700', isInstalled);
+            button.classList.toggle('hover:bg-slate-600', isInstalled);
+            lucide.createIcons({attrs: {"stroke-width": 2}, nameAttr: "data-lucide", scope: button});
         }
 
         // Render Tree folders
         function renderExplorerTree(skill) {
             const container = document.getElementById('explorer-tree');
-            
-            // Build tree html nodes (light theme styling)
-            container.innerHTML = `
-                <!-- Overview Folder -->
-                <div class="space-y-0.5">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Overview
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('readme', 'README.md', 'file-text')" id="node-readme" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i> README.md
-                        </button>
-                        <button onclick="loadWorkspaceFile('use_cases', 'use_cases.md', 'file-text')" id="node-use_cases" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="file-question" class="w-3.5 h-3.5 text-blue-600"></i> 사용 시나리오
-                        </button>
-                    </div>
-                </div>
+            const files = Array.isArray(skill.files) && skill.files.length > 0
+                ? [...skill.files]
+                : ['SKILL.md', 'skill.json'];
+            const rootFiles = files.filter(filePath => !filePath.includes('/')).sort(skillFileSort);
+            const groupedFiles = files
+                .filter(filePath => filePath.includes('/'))
+                .sort(skillFileSort)
+                .reduce((groups, filePath) => {
+                    const [folder] = filePath.split('/');
+                    if (!groups.has(folder)) groups.set(folder, []);
+                    groups.get(folder).push(filePath);
+                    return groups;
+                }, new Map());
 
-                <!-- Skill Definition Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Skill Definition
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('skill_yaml', 'skill.yaml', 'file-code')" id="node-skill_yaml" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="file-code" class="w-3.5 h-3.5 text-amber-600"></i> skill.yaml
-                        </button>
-                        <button onclick="loadWorkspaceFile('input_schema', 'input_schema.json', 'file-json')" id="node-input_schema" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="braces" class="w-3.5 h-3.5 text-teal-600"></i> input_schema.json
-                        </button>
-                    </div>
-                </div>
+            const rootHtml = rootFiles.length > 0
+                ? renderFileGroup('Skill Root', rootFiles)
+                : '';
+            const folderHtml = [...groupedFiles.entries()]
+                .map(([folder, folderFiles]) => renderFileGroup(folder, folderFiles))
+                .join('');
 
-                <!-- Prompts Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Prompts
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('system_prompt', 'system_prompt.md', 'terminal')" id="node-system_prompt" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="terminal" class="w-3.5 h-3.5 text-purple-600"></i> system_prompt.md
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tools/Code Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Tools & Logic
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('npv_calculator', 'calculator_tool.py', 'code')" id="node-npv_calculator" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="code" class="w-3.5 h-3.5 text-sky-600"></i> calculator_tool.py
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Examples Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Examples
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('example_input', 'example_input_01.json', 'file-input')" id="node-example_input" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="indent-decrease" class="w-3.5 h-3.5 text-emerald-600"></i> input_sample.json
-                        </button>
-                        <button onclick="loadWorkspaceFile('example_output', 'example_output_01.md', 'file-output')" id="node-example_output" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="log-out" class="w-3.5 h-3.5 text-teal-600"></i> output_sample.md
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Tests Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Tests
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('test_cases', 'test_cases.json', 'shield')" id="node-test_cases" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-rose-600"></i> test_cases.json
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Analytics Folder -->
-                <div class="space-y-0.5 mt-2">
-                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
-                        <i data-lucide="chevron-down" class="w-3 h-3"></i> Analytics
-                    </div>
-                    <div class="pl-2 pr-1">
-                        <button onclick="loadWorkspaceFile('analytics', 'usage_dashboard.md', 'bar-chart')" id="node-analytics" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
-                            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-indigo-600"></i> usage_dashboard.md
-                        </button>
-                    </div>
-                </div>
-            `;
+            container.innerHTML = rootHtml + folderHtml;
             lucide.createIcons();
         }
 
-        // Simulated file loading with markdown styling & YAML formatting
-        function loadWorkspaceFile(fileType, filename, iconName) {
-            // Unhighlight all
-            document.querySelectorAll('.tree-node').forEach(el => {
-                el.classList.remove('bg-slate-200', 'text-slate-900', 'font-semibold');
-            });
+        function renderFileGroup(label, files) {
+            return `
+                <div class="space-y-0.5 mt-2">
+                    <div class="flex items-center gap-1 px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider select-none">
+                        <i data-lucide="chevron-down" class="w-3 h-3"></i> ${escapeHTML(label)}
+                    </div>
+                    <div class="pl-2 pr-1">
+                        ${files.map(filePath => renderFileNode(filePath)).join('')}
+                    </div>
+                </div>
+            `;
+        }
 
-            // Highlight target
-            const activeNode = document.getElementById(`node-${fileType}`);
-            if (activeNode) {
-                activeNode.classList.add('bg-slate-200', 'text-slate-900', 'font-semibold');
+        function renderFileNode(filePath) {
+            const filename = filePath.split('/').pop();
+            const nodeId = fileNodeId(filePath);
+            const iconName = iconForSkillFile(filePath);
+            const iconColor = colorForSkillFile(filePath);
+
+            return `
+                <button onclick="loadWorkspaceFileByPath('${escapeJsString(filePath)}')" id="${nodeId}" title="${escapeHTML(filePath)}" class="tree-node w-full text-left py-1 px-3 hover:bg-slate-200/50 rounded text-slate-600 flex items-center gap-1.5 text-xs">
+                    <i data-lucide="${iconName}" class="w-3.5 h-3.5 ${iconColor}"></i> ${escapeHTML(filename)}
+                </button>
+            `;
+        }
+
+        function skillFileSort(a, b) {
+            const preferred = ['SKILL.md', 'skill.json', 'agents/openai.yaml', 'references/input.schema.json', 'examples/sample-input.json'];
+            const ai = preferred.indexOf(a);
+            const bi = preferred.indexOf(b);
+
+            if (ai !== -1 || bi !== -1) {
+                return (ai === -1 ? Number.MAX_SAFE_INTEGER : ai) - (bi === -1 ? Number.MAX_SAFE_INTEGER : bi);
             }
 
-            // Update Tab name
-            document.getElementById('current-tab-name').textContent = filename;
-            
-            // Icon Switch
-            const tabIcon = document.getElementById('current-tab-icon');
-            tabIcon.setAttribute('data-lucide', iconName || 'file-text');
-            lucide.createIcons({ scope: tabIcon.parentElement });
+            return a.localeCompare(b);
+        }
 
-            // Fetch mock content
-            let content = '';
-            if (MOCK_FILE_CONTENTS[activeSkillId] && MOCK_FILE_CONTENTS[activeSkillId][fileType]) {
-                content = MOCK_FILE_CONTENTS[activeSkillId][fileType];
+        function fileNodeId(filePath) {
+            return `node-${filePath.replace(/[^a-z0-9_-]/gi, '_')}`;
+        }
+
+        function iconForSkillFile(filePath) {
+            if (filePath === 'SKILL.md') return 'book-open-check';
+            if (filePath.endsWith('.json')) return 'braces';
+            if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) return 'file-code';
+            if (filePath.endsWith('.md')) return 'file-text';
+            return 'file';
+        }
+
+        function colorForSkillFile(filePath) {
+            if (filePath === 'SKILL.md') return 'text-indigo-600';
+            if (filePath.endsWith('.json')) return 'text-teal-600';
+            if (filePath.endsWith('.yaml') || filePath.endsWith('.yml')) return 'text-amber-600';
+            if (filePath.endsWith('.md')) return 'text-blue-600';
+            return 'text-slate-500';
+        }
+
+        function escapeJsString(value) {
+            return String(value).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        }
+
+        function replaceSkillInCatalog(updatedSkill) {
+            const index = currentSkills.findIndex(skill => skill.id === updatedSkill.id);
+
+            if (index >= 0) {
+                currentSkills[index] = updatedSkill;
             } else {
-                content = MOCK_FILE_CONTENTS['generic'][fileType] || '/* 빈 내용 또는 구성 파일 누락 */';
+                currentSkills.unshift(updatedSkill);
             }
+        }
 
-            // Build pretty styled content inside right body
+        function canCurrentAccountEditSkill(skill) {
+            if (!skill) return false;
+
+            const ownedByName = skill.owner === CURRENT_ACCOUNT.name;
+            const forkedByAccount = skill.forked_by_account_id === CURRENT_ACCOUNT.id;
+            const ownDraft = typeof skill.source_path === 'string'
+                && skill.source_path.startsWith('drafts/')
+                && skill.owner === CURRENT_ACCOUNT.name;
+
+            return ownedByName || forkedByAccount || ownDraft;
+        }
+
+        function updateEditorControls() {
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+            const canEdit = canCurrentAccountEditSkill(skill);
+            const modeLabel = document.getElementById('editor-mode-label');
+            const editButton = document.getElementById('btn-edit-file');
+            const saveButton = document.getElementById('btn-save-file');
+            const cancelButton = document.getElementById('btn-cancel-edit');
+
+            if (!modeLabel || !editButton || !saveButton || !cancelButton) return;
+
+            modeLabel.textContent = isEditingFile
+                ? 'VIEW MODE: TEXT EDIT'
+                : isMarkdownFile(currentFilePath)
+                    ? `VIEW MODE: ${markdownViewMode === 'source' ? 'RAW MARKDOWN' : 'RENDERED MARKDOWN'}`
+                    : canEdit ? 'VIEW MODE: EDITABLE PREVIEW' : 'VIEW MODE: READ-ONLY PREVIEW';
+            modeLabel.classList.toggle('text-emerald-600', canEdit && !isEditingFile);
+            modeLabel.classList.toggle('text-blue-600', isEditingFile);
+            modeLabel.classList.toggle('text-slate-400', !canEdit && !isEditingFile);
+
+            updateMarkdownViewControls();
+            editButton.classList.toggle('hidden', !canEdit || isEditingFile);
+            editButton.classList.toggle('flex', canEdit && !isEditingFile);
+            saveButton.classList.toggle('hidden', !isEditingFile);
+            saveButton.classList.toggle('flex', isEditingFile);
+            saveButton.disabled = isSavingFile;
+            saveButton.classList.toggle('opacity-60', isSavingFile);
+            cancelButton.classList.toggle('hidden', !isEditingFile);
+            cancelButton.classList.toggle('flex', isEditingFile);
+
+            lucide.createIcons({ scope: editButton.parentElement });
+        }
+
+        function isMarkdownFile(filePath) {
+            return filePath.split('/').pop().toLowerCase().endsWith('.md');
+        }
+
+        function updateMarkdownViewControls() {
+            const toggle = document.getElementById('markdown-view-toggle');
+            const renderedButton = document.getElementById('btn-markdown-rendered');
+            const sourceButton = document.getElementById('btn-markdown-source');
+            const showToggle = isMarkdownFile(currentFilePath) && !isEditingFile;
+
+            if (!toggle || !renderedButton || !sourceButton) return;
+
+            toggle.classList.toggle('hidden', !showToggle);
+            toggle.classList.toggle('flex', showToggle);
+
+            for (const [button, mode] of [[renderedButton, 'rendered'], [sourceButton, 'source']]) {
+                const isActive = markdownViewMode === mode;
+                button.classList.toggle('bg-indigo-600', isActive);
+                button.classList.toggle('text-white', isActive);
+                button.classList.toggle('shadow-sm', isActive);
+                button.classList.toggle('text-slate-500', !isActive);
+                button.classList.toggle('hover:text-slate-800', !isActive);
+                button.classList.toggle('hover:bg-slate-100', !isActive);
+                button.setAttribute('aria-pressed', String(isActive));
+            }
+        }
+
+        function setMarkdownViewMode(mode) {
+            if (!['rendered', 'source'].includes(mode) || !isMarkdownFile(currentFilePath)) return;
+
+            markdownViewMode = mode;
+            renderFilePreview(currentFilePath, currentFileContent);
+            updateEditorControls();
+        }
+
+        function renderFilePreview(filePath, content) {
             const renderArea = document.getElementById('detail-content-area');
 
-            if (filename.endsWith('.md')) {
+            if (isMarkdownFile(filePath)) {
+                if (markdownViewMode === 'source') {
+                    renderArea.innerHTML = `
+                    <pre class="markdown-source-view bg-slate-50 p-5 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 overflow-x-auto leading-relaxed whitespace-pre-wrap vscode-scrollbar"><code>${escapeHTML(content)}</code></pre>
+                `;
+                    return;
+                }
+
                 renderArea.innerHTML = `
                     <div class="prose prose-slate max-w-none space-y-4">
                         ${parseMarkdown(content)}
                     </div>
                 `;
             } else {
-                // Code view block
                 renderArea.innerHTML = `
                     <pre class="bg-slate-50 p-5 rounded-xl border border-slate-200 font-mono text-xs text-slate-700 overflow-x-auto leading-relaxed whitespace-pre vscode-scrollbar"><code>${escapeHTML(content)}</code></pre>
                 `;
             }
         }
 
+        function renderFileEditor() {
+            const renderArea = document.getElementById('detail-content-area');
+            renderArea.innerHTML = `
+                <textarea id="file-edit-textarea" spellcheck="false" class="w-full min-h-full resize-none bg-slate-950 text-slate-50 border border-slate-800 rounded-xl p-5 font-mono text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-blue-500 vscode-scrollbar">${escapeHTML(currentFileContent)}</textarea>
+            `;
+            document.getElementById('file-edit-textarea')?.focus();
+        }
+
+        function startFileEdit() {
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+
+            if (!canCurrentAccountEditSkill(skill)) {
+                showToast('본인이 만든 스킬 또는 Fork한 스킬만 수정할 수 있습니다.', 'error');
+                return;
+            }
+
+            isEditingFile = true;
+            renderFileEditor();
+            updateEditorControls();
+        }
+
+        function cancelFileEdit() {
+            isEditingFile = false;
+            renderFilePreview(currentFilePath, currentFileContent);
+            updateEditorControls();
+        }
+
+        async function saveFileEdit() {
+            const textarea = document.getElementById('file-edit-textarea');
+            if (!textarea || isSavingFile) return;
+
+            isSavingFile = true;
+            updateEditorControls();
+
+            try {
+                const response = await fetch(`/api/skills/${encodeURIComponent(activeSkillId)}/files`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        accountId: CURRENT_ACCOUNT.id,
+                        accountName: CURRENT_ACCOUNT.name,
+                        filePath: currentFilePath,
+                        content: textarea.value
+                    })
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.error || `Skill file save failed with ${response.status}`);
+                }
+
+                replaceSkillInCatalog(payload.skill);
+                currentFileContent = payload.content;
+                isEditingFile = false;
+                applyFilterAndSort();
+                loadSkillDetail(payload.skill.id);
+                loadWorkspaceFileByPath(payload.filePath);
+                showToast(`${payload.filePath} 파일을 저장했습니다.`, 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '파일 저장에 실패했습니다.', 'error');
+            } finally {
+                isSavingFile = false;
+                updateEditorControls();
+            }
+        }
+
+        // Load real skill files supplied by the backend catalog.
+        function loadWorkspaceFileByPath(filePath) {
+            isEditingFile = false;
+            markdownViewMode = 'rendered';
+            // Unhighlight all
+            document.querySelectorAll('.tree-node').forEach(el => {
+                el.classList.remove('bg-slate-200', 'text-slate-900');
+            });
+
+            // Highlight target
+            const activeNode = document.getElementById(fileNodeId(filePath));
+            if (activeNode) {
+                activeNode.classList.add('bg-slate-200', 'text-slate-900');
+            }
+
+            // Update Tab name
+            const filename = filePath.split('/').pop();
+            document.getElementById('current-tab-name').textContent = filename;
+            
+            // Icon Switch
+            const tabIcon = document.getElementById('current-tab-icon');
+            tabIcon.setAttribute('data-lucide', iconForSkillFile(filePath));
+            lucide.createIcons({ scope: tabIcon.parentElement });
+
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+            const content = skill?.file_contents?.[filePath] || fallbackSkillFileContent(skill, filePath);
+            currentFilePath = filePath;
+            currentFileContent = content;
+
+            renderFilePreview(filePath, content);
+            updateEditorControls();
+        }
+
+        function fallbackSkillFileContent(skill, filePath) {
+            if (!skill) return '/* 스킬을 찾을 수 없습니다. */';
+
+            if (filePath === 'SKILL.md') {
+                return `---\nname: ${skill.id}\ndescription: ${skill.short_description}\n---\n\n# ${skill.name}\n\n${skill.short_description}\n`;
+            }
+
+            if (filePath === 'skill.json') {
+                const { file_contents, files, ...manifest } = skill;
+                return JSON.stringify(manifest, null, 2);
+            }
+
+            return MOCK_FILE_CONTENTS.generic?.skill_md || '/* 파일 내용이 아직 등록되지 않았습니다. */';
+        }
+
         function escapeHTML(str) {
-            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
         // Extremely simplified client-side Markdown to HTML converter
@@ -599,7 +1215,7 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
         }
 
         // Active header operations sim
-        function triggerAction(action) {
+        async function triggerAction(action) {
             const skill = currentSkills.find(s => s.id === activeSkillId);
             if (!skill) return;
 
@@ -609,17 +1225,42 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                 applyFilterAndSort();
                 showToast(`[${skill.name}] 스킬에 좋아요를 등록했습니다.`, 'success');
             } else if (action === 'install') {
-                skill.downloads++;
+                await installSkillForCurrentAccount(skill);
                 document.getElementById('detail-down-cnt').textContent = skill.downloads.toLocaleString();
-                applyFilterAndSort();
-                showToast(`[${skill.name}] 스킬이 개인 계정에 마운트 완료되었습니다.`, 'success');
             } else if (action === 'run') {
                 skill.runs++;
                 document.getElementById('detail-run-cnt').textContent = skill.runs.toLocaleString();
                 applyFilterAndSort();
                 showToast(`[가상 실행 성공] 입력 파라미터를 대조하여 1회 성공 처리를 집계했습니다!`, 'success');
             } else if (action === 'fork') {
-                showToast(`[복제 분기] '${skill.name} (Forked)' 사본을 내 Draft 임시저장소로 이전했습니다.`, 'info');
+                try {
+                    const response = await fetch(`/api/skills/${encodeURIComponent(skill.id)}/fork`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            accountId: CURRENT_ACCOUNT.id,
+                            accountName: CURRENT_ACCOUNT.name,
+                            accountTeam: CURRENT_ACCOUNT.team
+                        })
+                    });
+                    const payload = await response.json().catch(() => ({}));
+
+                    if (!response.ok) {
+                        throw new Error(payload.error || `Skill fork failed with ${response.status}`);
+                    }
+
+                    currentSkills.unshift(payload);
+                    activeFilters = { ...defaultFilters, myDrafts: true };
+                    currentSort = 'recent';
+                    refreshCatalogResults();
+                    pushCatalogHistory();
+                    activeSkillId = payload.id;
+                    loadSkillDetail(payload.id);
+                    showToast(`[복제 완료] '${payload.name}' 사본을 내 Draft/Fork 목록에 만들었습니다.`, 'success');
+                } catch (error) {
+                    console.error(error);
+                    showToast(error.message || '스킬 Fork에 실패했습니다.', 'error');
+                }
             }
         }
 
@@ -734,8 +1375,8 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
             }, 1500);
         }
 
-        // Finalize Registration and push to In-Memory DB
-        function finalizeRegistration() {
+        // Finalize Registration and persist as a skill package through the backend API
+        async function finalizeRegistration() {
             const name = document.getElementById('reg-name').value;
             const short_desc = document.getElementById('reg-short').value;
             const category = document.getElementById('reg-category').value;
@@ -743,15 +1384,14 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
             const tagsInput = document.getElementById('reg-tags').value;
             const visibilityOption = document.querySelector('input[name="reg-vis"]:checked').value;
 
-            const newSkill = {
-                id: `skill-${Date.now()}`,
+            const skillDraft = {
                 name: name,
                 short_description: short_desc,
-                owner: "박민우", 
+                owner: "오명철 과장",
                 team: "경영기획DX추진TF팀",
-                downloads: 1,
+                downloads: 0,
                 likes: 0,
-                runs: 1,
+                runs: 0,
                 success_rate: 100,
                 quality_score: 90, 
                 category: category,
@@ -764,9 +1404,22 @@ const MOCK_FILE_CONTENTS = window.MOCK_FILE_CONTENTS || {};
                 icon: "sparkles"
             };
 
-            currentSkills.unshift(newSkill);
-            
-            applyFilterAndSort();
-            closeRegisterModal();
-            showToast(`[${name}] 스킬이 Draft 상태로 마켓플레이스에 정상 배포 신청되었습니다!`, 'success');
+            try {
+                const response = await fetch('/api/skills', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(skillDraft)
+                });
+                if (!response.ok) {
+                    throw new Error(`Skill save failed with ${response.status}`);
+                }
+                const savedSkill = await response.json();
+                currentSkills.unshift(savedSkill);
+                applyFilterAndSort();
+                closeRegisterModal();
+                showToast(`[${name}] 스킬 패키지가 저장되고 Draft 상태로 등록되었습니다.`, 'success');
+            } catch (error) {
+                console.error(error);
+                showToast('스킬 패키지 저장에 실패했습니다. 서버 상태를 확인해 주세요.', 'error');
+            }
         }

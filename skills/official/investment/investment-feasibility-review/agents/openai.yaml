@@ -1,0 +1,7 @@
+interface:
+  display_name: "투자 타당성 검토 Skill"
+  short_description: "투자 검토보고서의 사업성, 리스크, 회수기간을 자동 분석합니다."
+  default_prompt: "Use $investment-feasibility-review to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

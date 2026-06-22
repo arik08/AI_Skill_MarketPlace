@@ -1,0 +1,7 @@
+interface:
+  display_name: "문서 요약 및 액션 정리"
+  short_description: "긴 업무 문서를 핵심 요약, 의사결정 사항, 후속 액션으로 빠르게 정리합니다."
+  default_prompt: "Use $document-summary-action-brief to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

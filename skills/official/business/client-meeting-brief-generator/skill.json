@@ -1,0 +1,30 @@
+{
+  "id": "client-meeting-brief-generator",
+  "name": "고객사 미팅 준비 메모 생성",
+  "short_description": "고객사 기본 정보, 최근 이슈, 과거 논의사항을 묶어 영업/사업 담당자용 미팅 준비 메모를 만듭니다.",
+  "owner": "이도윤 차장",
+  "team": "사업개발그룹",
+  "downloads": 765,
+  "likes": 142,
+  "runs": 4311,
+  "success_rate": 94,
+  "quality_score": 87,
+  "category": "사업관리",
+  "type": "보고서생성형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.0.9",
+  "updated_at": "2026.06.07",
+  "tags": [
+    "고객사분석",
+    "미팅준비",
+    "영업메모",
+    "사업개발"
+  ],
+  "icon": "handshake",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 23
+}

@@ -1,0 +1,30 @@
+{
+  "id": "hr-career-history-screening",
+  "name": "부서별 맞춤형 이력 검증 지원(HR)",
+  "short_description": "사내 공모직무 지원서 내 핵심 키워드 매칭 여부 및 기술 경력 이력을 객관적으로 평정합니다.",
+  "owner": "박지영 대리",
+  "team": "HR지원본부",
+  "downloads": 320,
+  "likes": 67,
+  "runs": 1120,
+  "success_rate": 91,
+  "quality_score": 75,
+  "category": "HR",
+  "type": "프롬프트형",
+  "status": "Beta",
+  "visibility": "부서 공개",
+  "version": "v0.8.2",
+  "updated_at": "2026.05.28",
+  "tags": [
+    "HR지원",
+    "경력이력",
+    "공모직무",
+    "키워드매칭"
+  ],
+  "icon": "users",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 6
+}

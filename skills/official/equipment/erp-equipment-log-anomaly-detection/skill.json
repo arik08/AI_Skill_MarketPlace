@@ -1,0 +1,30 @@
+{
+  "id": "erp-equipment-log-anomaly-detection",
+  "name": "ERP 설비 가동 로그 이상 감지",
+  "short_description": "실시간 설비 제어 로그 데이터를 분석하여 고장 위험 징후 및 보전 조치 사항을 제안합니다.",
+  "owner": "강민석 과장",
+  "team": "광양제철소 설비실",
+  "downloads": 673,
+  "likes": 145,
+  "runs": 9340,
+  "success_rate": 95,
+  "quality_score": 83,
+  "category": "설비",
+  "type": "데이터분석형",
+  "status": "Beta",
+  "visibility": "부서 공개",
+  "version": "v0.9.4",
+  "updated_at": "2026.06.01",
+  "tags": [
+    "설비가동",
+    "이상감지",
+    "정비예측",
+    "광양제철소"
+  ],
+  "icon": "activity",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 4
+}

@@ -1,0 +1,30 @@
+{
+  "id": "travel-expense-receipt-gap-detection",
+  "name": "출장비 정산 증빙 누락 탐지",
+  "short_description": "출장비 정산 내역과 영수증 첨부 현황을 대조해 누락 증빙과 비정상 금액을 표시합니다.",
+  "owner": "김나연 사원",
+  "team": "재무공유서비스센터",
+  "downloads": 980,
+  "likes": 176,
+  "runs": 6804,
+  "success_rate": 95,
+  "quality_score": 89,
+  "category": "재무",
+  "type": "데이터분석형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.3.0",
+  "updated_at": "2026.06.12",
+  "tags": [
+    "출장정산",
+    "증빙누락",
+    "영수증",
+    "비용검토"
+  ],
+  "icon": "wallet-cards",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 20
+}

@@ -1,0 +1,30 @@
+{
+  "id": "training-survey-summary-improvement-plan",
+  "name": "교육 만족도 설문 요약 및 개선안 도출",
+  "short_description": "교육 설문 주관식 응답을 주제별로 묶고 다음 차수 개선 액션을 추천합니다.",
+  "owner": "배소영 과장",
+  "team": "HRD센터",
+  "downloads": 634,
+  "likes": 121,
+  "runs": 3190,
+  "success_rate": 94,
+  "quality_score": 86,
+  "category": "HR",
+  "type": "데이터분석형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.1.2",
+  "updated_at": "2026.06.09",
+  "tags": [
+    "교육설문",
+    "만족도분석",
+    "개선안",
+    "HRD"
+  ],
+  "icon": "graduation-cap",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 18
+}

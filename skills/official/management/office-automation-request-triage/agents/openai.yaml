@@ -1,0 +1,7 @@
+interface:
+  display_name: "사무 자동화 요청 분류 및 우선순위화"
+  short_description: "현업 자동화 요청을 난이도, 기대효과, 데이터 접근성 기준으로 분류해 추진 우선순위를 제안합니다."
+  default_prompt: "Use $office-automation-request-triage to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

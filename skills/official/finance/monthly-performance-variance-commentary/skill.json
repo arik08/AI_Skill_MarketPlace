@@ -1,0 +1,30 @@
+{
+  "id": "monthly-performance-variance-commentary",
+  "name": "월간 실적 차이 분석 코멘트 생성",
+  "short_description": "계획 대비 실적 차이를 항목별로 해석하고 재무/비재무 원인 코멘트를 생성합니다.",
+  "owner": "이수빈 차장",
+  "team": "재무실",
+  "downloads": 1194,
+  "likes": 276,
+  "runs": 8760,
+  "success_rate": 95,
+  "quality_score": 92,
+  "category": "재무",
+  "type": "데이터분석형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v1.4.1",
+  "updated_at": "2026.06.17",
+  "tags": [
+    "실적분석",
+    "차이분석",
+    "월간보고",
+    "재무코멘트"
+  ],
+  "icon": "chart-no-axes-combined",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 9
+}

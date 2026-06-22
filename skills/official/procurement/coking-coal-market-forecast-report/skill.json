@@ -1,0 +1,30 @@
+{
+  "id": "coking-coal-market-forecast-report",
+  "name": "원료탄 구매 시황 예측 및 보고",
+  "short_description": "글로벌 원자재 트렌드 API를 연동하여 원료탄 수입 시황 예측 및 시나리오별 리스크를 리포팅합니다.",
+  "owner": "윤도현 리더",
+  "team": "구매본부 원료실",
+  "downloads": 412,
+  "likes": 92,
+  "runs": 1842,
+  "success_rate": 98,
+  "quality_score": 95,
+  "category": "구매",
+  "type": "API연계형",
+  "status": "Official",
+  "visibility": "부서 공개",
+  "version": "v1.1.0",
+  "updated_at": "2026.06.15",
+  "tags": [
+    "원료탄",
+    "시황예측",
+    "원자재",
+    "수입분석"
+  ],
+  "icon": "ship",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 3
+}

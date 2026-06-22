@@ -1,0 +1,30 @@
+{
+  "id": "email-reply-tone-draft",
+  "name": "메일/메신저 답변 초안 작성",
+  "short_description": "업무 요청, 문의, 협조 메일에 대해 상황별 톤을 맞춘 답변 초안을 작성합니다.",
+  "owner": "민재훈 대리",
+  "team": "업무혁신그룹",
+  "downloads": 964,
+  "likes": 205,
+  "runs": 7116,
+  "success_rate": 95,
+  "quality_score": 90,
+  "category": "공통",
+  "type": "프롬프트형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.0.0",
+  "updated_at": "2026.06.22",
+  "tags": [
+    "메일초안",
+    "메신저응답",
+    "톤앤매너",
+    "공통업무"
+  ],
+  "icon": "mail-check",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 26
+}

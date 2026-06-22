@@ -1,0 +1,7 @@
+interface:
+  display_name: "부서별 맞춤형 이력 검증 지원(HR)"
+  short_description: "사내 공모직무 지원서 내 핵심 키워드 매칭 여부 및 기술 경력 이력을 객관적으로 평정합니다."
+  default_prompt: "Use $hr-career-history-screening to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

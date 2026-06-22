@@ -1,12 +1,16 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
+import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { installSkillForAccount, readInstalledSkillIds } from './lib/installations.js';
+import { createSkillPackage, forkSkillPackage, readSkillCatalog, updateSkillFile } from './lib/skillCatalog.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 const frontendRoot = path.join(repoRoot, 'frontend');
 const port = Number(process.env.PORT || 5173);
+const host = process.env.HOST || '0.0.0.0';
 
 const contentTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -23,6 +27,35 @@ const contentTypes = {
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, { 'content-type': contentTypes['.json'] });
   response.end(JSON.stringify(payload, null, 2));
+}
+
+function sendApiError(response, error) {
+  const statusCode = Number(error.statusCode || 500);
+  sendJson(response, statusCode, {
+    error: statusCode >= 500 ? 'Internal server error' : error.message
+  });
+}
+
+function readRequestJson(request) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+
+    request.on('data', (chunk) => {
+      body += chunk;
+      if (body.length > 1_000_000) {
+        reject(new Error('Request body too large'));
+        request.destroy();
+      }
+    });
+    request.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (error) {
+        reject(error);
+      }
+    });
+    request.on('error', reject);
+  });
 }
 
 async function sendFile(response, filePath) {
@@ -47,7 +80,59 @@ async function handleApi(request, response, url) {
 
   // GET /api/skills
   if (request.method === 'GET' && url.pathname === '/api/skills') {
-    await sendFile(response, path.join(__dirname, 'data', 'skills.json'));
+    sendJson(response, 200, await readSkillCatalog());
+    return true;
+  }
+
+  // GET /api/installations
+  if (request.method === 'GET' && url.pathname === '/api/installations') {
+    const accountId = url.searchParams.get('accountId');
+
+    if (!accountId) {
+      sendJson(response, 400, { error: 'accountId is required' });
+      return true;
+    }
+
+    sendJson(response, 200, {
+      accountId,
+      skillIds: await readInstalledSkillIds(accountId)
+    });
+    return true;
+  }
+
+  // POST /api/installations
+  if (request.method === 'POST' && url.pathname === '/api/installations') {
+    const installation = await installSkillForAccount(await readRequestJson(request));
+    sendJson(response, 201, installation);
+    return true;
+  }
+
+  // POST /api/skills
+  if (request.method === 'POST' && url.pathname === '/api/skills') {
+    const skill = await createSkillPackage(await readRequestJson(request));
+    sendJson(response, 201, skill);
+    return true;
+  }
+
+  const forkMatch = url.pathname.match(/^\/api\/skills\/([^/]+)\/fork$/);
+  // POST /api/skills/:skillId/fork
+  if (request.method === 'POST' && forkMatch) {
+    const skill = await forkSkillPackage({
+      ...await readRequestJson(request),
+      skillId: decodeURIComponent(forkMatch[1])
+    });
+    sendJson(response, 201, skill);
+    return true;
+  }
+
+  const fileMatch = url.pathname.match(/^\/api\/skills\/([^/]+)\/files$/);
+  // PUT /api/skills/:skillId/files
+  if (request.method === 'PUT' && fileMatch) {
+    const result = await updateSkillFile({
+      ...await readRequestJson(request),
+      skillId: decodeURIComponent(fileMatch[1])
+    });
+    sendJson(response, 200, result);
     return true;
   }
 
@@ -94,10 +179,37 @@ const server = createServer(async (request, response) => {
     await handleStatic(response, url);
   } catch (error) {
     console.error(error);
-    sendJson(response, 500, { error: 'Internal server error' });
+    sendApiError(response, error);
   }
 });
 
-server.listen(port, () => {
-  console.log(`AI Skill Marketplace running at http://localhost:${port}`);
+function getLanUrls() {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((netInterface) => {
+      return netInterface
+        && netInterface.family === 'IPv4'
+        && !netInterface.internal;
+    })
+    .map((netInterface) => `http://${netInterface.address}:${port}`);
+}
+
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`Port ${port} is already in use. Set a different PORT value and try again.`);
+    process.exit(1);
+  }
+
+  throw error;
+});
+
+server.listen(port, host, () => {
+  console.log(`AI Skill Marketplace running on ${host}:${port}`);
+  console.log(`Local: http://localhost:${port}`);
+
+  for (const url of getLanUrls()) {
+    console.log(`LAN:   ${url}`);
+  }
+
+  console.log('Share one of the LAN URLs with people on the same network.');
 });

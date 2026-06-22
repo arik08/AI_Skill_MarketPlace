@@ -1,0 +1,31 @@
+{
+  "id": "investment-feasibility-review",
+  "name": "투자 타당성 검토 Skill",
+  "short_description": "투자 검토보고서의 사업성, 리스크, 회수기간을 자동 분석합니다.",
+  "owner": "오명철 과장",
+  "team": "경영기획DX추진TF팀",
+  "downloads": 1284,
+  "likes": 243,
+  "runs": 8921,
+  "success_rate": 96,
+  "quality_score": 87,
+  "category": "투자관리",
+  "type": "보고서생성형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.3.2",
+  "updated_at": "2026.06.22",
+  "tags": [
+    "투자관리",
+    "보고서생성",
+    "NPV",
+    "IRR",
+    "사업성분석"
+  ],
+  "icon": "trending-up",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 1
+}

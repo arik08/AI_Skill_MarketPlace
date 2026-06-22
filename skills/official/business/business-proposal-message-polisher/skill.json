@@ -1,0 +1,30 @@
+{
+  "id": "business-proposal-message-polisher",
+  "name": "사업 제안서 핵심 메시지 다듬기",
+  "short_description": "제안서 초안의 고객 문제, 솔루션, 기대효과를 일관된 임원 보고 톤으로 정리합니다.",
+  "owner": "이하나 대리",
+  "team": "신사업기획그룹",
+  "downloads": 648,
+  "likes": 149,
+  "runs": 3520,
+  "success_rate": 92,
+  "quality_score": 85,
+  "category": "사업관리",
+  "type": "프롬프트형",
+  "status": "Beta",
+  "visibility": "전사 공개",
+  "version": "v0.7.4",
+  "updated_at": "2026.05.30",
+  "tags": [
+    "제안서",
+    "핵심메시지",
+    "사업기획",
+    "기대효과"
+  ],
+  "icon": "pen-line",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 14
+}

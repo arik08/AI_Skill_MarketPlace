@@ -1,0 +1,30 @@
+{
+  "id": "meeting-action-item-assignment",
+  "name": "회의록 액션아이템 추출 및 담당자 배정",
+  "short_description": "회의록에서 결정사항, 담당자, 마감일을 추출하고 후속 메일 초안을 자동 작성합니다.",
+  "owner": "문지훈 대리",
+  "team": "업무혁신그룹",
+  "downloads": 2130,
+  "likes": 402,
+  "runs": 15280,
+  "success_rate": 96,
+  "quality_score": 94,
+  "category": "경영기획",
+  "type": "문서분석형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.8.3",
+  "updated_at": "2026.06.18",
+  "tags": [
+    "회의록",
+    "액션아이템",
+    "담당자배정",
+    "메일초안"
+  ],
+  "icon": "list-checks",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 8
+}

@@ -1,0 +1,30 @@
+{
+  "id": "investment-case-search",
+  "name": "유사 투자사례 지능형 검색",
+  "short_description": "과거 투자심의 문서에서 입력 프로젝트와 유사한 성공/실패 사례를 다각도로 마이닝합니다.",
+  "owner": "한지민 차장",
+  "team": "전략투자본부",
+  "downloads": 842,
+  "likes": 188,
+  "runs": 5104,
+  "success_rate": 94,
+  "quality_score": 91,
+  "category": "투자관리",
+  "type": "문서분석형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v2.0.1",
+  "updated_at": "2026.05.10",
+  "tags": [
+    "사례검색",
+    "과거문서",
+    "투자심의",
+    "유사도분석"
+  ],
+  "icon": "search-code",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 2
+}

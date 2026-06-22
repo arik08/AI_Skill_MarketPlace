@@ -3,6 +3,51 @@ body {
     font-family: 'Inter', 'Noto Sans KR', sans-serif;
 }
 
+.filter-sidebar {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.filter-sidebar::-webkit-scrollbar {
+    width: 7px;
+}
+
+.filter-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 12px;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+}
+
+.filter-sidebar::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.personal-filter-button {
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, box-shadow 140ms ease;
+}
+
+.personal-filter-button.is-active {
+    box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+.personal-filter-count {
+    align-items: center;
+    box-sizing: border-box;
+    display: inline-flex;
+    font-variant-numeric: tabular-nums;
+    height: 1.625rem;
+    justify-content: center;
+    line-height: 1;
+    min-width: 1.5rem;
+    padding: 0;
+    width: 1.625rem;
+}
+
 .keep-korean {
     word-break: keep-all;
     overflow-wrap: break-word;

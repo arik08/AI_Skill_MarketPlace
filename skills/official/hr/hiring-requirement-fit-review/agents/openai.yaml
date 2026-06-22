@@ -1,0 +1,7 @@
+interface:
+  display_name: "채용 공고 직무요건 정합성 검토"
+  short_description: "채용 공고의 직무, 필요역량, 우대조건이 표준 직무기술서와 일치하는지 검토합니다."
+  default_prompt: "Use $hiring-requirement-fit-review to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

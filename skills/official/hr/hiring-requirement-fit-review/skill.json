@@ -1,0 +1,30 @@
+{
+  "id": "hiring-requirement-fit-review",
+  "name": "채용 공고 직무요건 정합성 검토",
+  "short_description": "채용 공고의 직무, 필요역량, 우대조건이 표준 직무기술서와 일치하는지 검토합니다.",
+  "owner": "정하린 대리",
+  "team": "HR지원본부",
+  "downloads": 455,
+  "likes": 94,
+  "runs": 2060,
+  "success_rate": 91,
+  "quality_score": 82,
+  "category": "HR",
+  "type": "문서분석형",
+  "status": "Beta",
+  "visibility": "부서 공개",
+  "version": "v0.8.5",
+  "updated_at": "2026.06.03",
+  "tags": [
+    "채용공고",
+    "직무기술서",
+    "역량요건",
+    "HR검토"
+  ],
+  "icon": "user-search",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 17
+}

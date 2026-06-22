@@ -1,0 +1,7 @@
+interface:
+  display_name: "구매 견적 비교표 자동 작성"
+  short_description: "복수 업체 견적서의 단가, 납기, 조건을 표준 비교표로 정리하고 추천 사유를 작성합니다."
+  default_prompt: "Use $procurement-quote-comparison-table to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

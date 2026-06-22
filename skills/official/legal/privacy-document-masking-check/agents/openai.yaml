@@ -1,0 +1,7 @@
+interface:
+  display_name: "개인정보 포함 문서 마스킹 체크"
+  short_description: "공유 예정 문서에서 주민번호, 연락처, 계좌번호 등 개인정보 패턴을 찾아 마스킹 권고를 제공합니다."
+  default_prompt: "Use $privacy-document-masking-check to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

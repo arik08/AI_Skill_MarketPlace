@@ -1,0 +1,7 @@
+interface:
+  display_name: "고객사 미팅 준비 메모 생성"
+  short_description: "고객사 기본 정보, 최근 이슈, 과거 논의사항을 묶어 영업/사업 담당자용 미팅 준비 메모를 만듭니다."
+  default_prompt: "Use $client-meeting-brief-generator to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

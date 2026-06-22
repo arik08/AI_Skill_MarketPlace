@@ -1,0 +1,30 @@
+{
+  "id": "privacy-document-masking-check",
+  "name": "개인정보 포함 문서 마스킹 체크",
+  "short_description": "공유 예정 문서에서 주민번호, 연락처, 계좌번호 등 개인정보 패턴을 찾아 마스킹 권고를 제공합니다.",
+  "owner": "최민준 리더",
+  "team": "컴플라이언스실",
+  "downloads": 1880,
+  "likes": 360,
+  "runs": 13210,
+  "success_rate": 98,
+  "quality_score": 97,
+  "category": "법무",
+  "type": "MCP Tool형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v2.3.0",
+  "updated_at": "2026.06.21",
+  "tags": [
+    "개인정보",
+    "마스킹",
+    "문서검토",
+    "컴플라이언스"
+  ],
+  "icon": "scan-eye",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 16
+}

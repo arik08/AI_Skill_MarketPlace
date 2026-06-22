@@ -1,0 +1,7 @@
+interface:
+  display_name: "월간 실적 차이 분석 코멘트 생성"
+  short_description: "계획 대비 실적 차이를 항목별로 해석하고 재무/비재무 원인 코멘트를 생성합니다."
+  default_prompt: "Use $monthly-performance-variance-commentary to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

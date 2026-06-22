@@ -1,0 +1,30 @@
+{
+  "id": "corporate-seal-request-review",
+  "name": "법인인감 날인 신청서 실시간 검토",
+  "short_description": "날인 대상 서류의 불공정 거래 독소 조항, 손해배상 문맥을 계약 가이드라인에 대조 분석합니다.",
+  "owner": "서지훈 부장",
+  "team": "법무기획실",
+  "downloads": 988,
+  "likes": 210,
+  "runs": 7300,
+  "success_rate": 97,
+  "quality_score": 89,
+  "category": "법무",
+  "type": "MCP Tool형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.5.0",
+  "updated_at": "2026.04.18",
+  "tags": [
+    "법무검토",
+    "계약서독소조항",
+    "법인인감",
+    "리스크체크"
+  ],
+  "icon": "shield-alert",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 5
+}

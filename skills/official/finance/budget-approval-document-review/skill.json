@@ -1,0 +1,30 @@
+{
+  "id": "budget-approval-document-review",
+  "name": "예산 품의서 검토 보조",
+  "short_description": "예산 품의서의 계정과목, 승인선, 증빙 누락 여부를 체크하고 보완 문구를 제안합니다.",
+  "owner": "최유진 과장",
+  "team": "예산관리그룹",
+  "downloads": 905,
+  "likes": 154,
+  "runs": 6240,
+  "success_rate": 93,
+  "quality_score": 88,
+  "category": "재무",
+  "type": "문서분석형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.2.0",
+  "updated_at": "2026.06.08",
+  "tags": [
+    "예산품의",
+    "승인선",
+    "증빙검토",
+    "계정과목"
+  ],
+  "icon": "receipt-text",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 10
+}

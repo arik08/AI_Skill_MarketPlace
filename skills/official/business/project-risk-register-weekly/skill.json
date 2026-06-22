@@ -1,0 +1,30 @@
+{
+  "id": "project-risk-register-weekly",
+  "name": "프로젝트 주간 리스크 레지스터 정리",
+  "short_description": "프로젝트 진행 메모에서 일정, 비용, 품질 리스크를 추출해 주간 레지스터로 정리합니다.",
+  "owner": "장현우 차장",
+  "team": "사업관리PMO",
+  "downloads": 1032,
+  "likes": 201,
+  "runs": 7401,
+  "success_rate": 95,
+  "quality_score": 90,
+  "category": "사업관리",
+  "type": "보고서생성형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.6.0",
+  "updated_at": "2026.06.16",
+  "tags": [
+    "PMO",
+    "리스크관리",
+    "주간보고",
+    "프로젝트관리"
+  ],
+  "icon": "clipboard-list",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 13
+}

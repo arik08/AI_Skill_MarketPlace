@@ -1,0 +1,7 @@
+interface:
+  display_name: "원료탄 구매 시황 예측 및 보고"
+  short_description: "글로벌 원자재 트렌드 API를 연동하여 원료탄 수입 시황 예측 및 시나리오별 리스크를 리포팅합니다."
+  default_prompt: "Use $coking-coal-market-forecast-report to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,7 @@
+interface:
+  display_name: "교육 만족도 설문 요약 및 개선안 도출"
+  short_description: "교육 설문 주관식 응답을 주제별로 묶고 다음 차수 개선 액션을 추천합니다."
+  default_prompt: "Use $training-survey-summary-improvement-plan to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

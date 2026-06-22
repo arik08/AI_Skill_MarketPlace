@@ -1,0 +1,7 @@
+interface:
+  display_name: "유사 투자사례 지능형 검색"
+  short_description: "과거 투자심의 문서에서 입력 프로젝트와 유사한 성공/실패 사례를 다각도로 마이닝합니다."
+  default_prompt: "Use $investment-case-search to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

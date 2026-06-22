@@ -1,0 +1,30 @@
+{
+  "id": "office-automation-request-triage",
+  "name": "사무 자동화 요청 분류 및 우선순위화",
+  "short_description": "현업 자동화 요청을 난이도, 기대효과, 데이터 접근성 기준으로 분류해 추진 우선순위를 제안합니다.",
+  "owner": "임태훈 리더",
+  "team": "경영기획DX추진TF팀",
+  "downloads": 1326,
+  "likes": 255,
+  "runs": 9055,
+  "success_rate": 96,
+  "quality_score": 93,
+  "category": "경영기획",
+  "type": "데이터분석형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v1.4.0",
+  "updated_at": "2026.06.22",
+  "tags": [
+    "사무자동화",
+    "요청분류",
+    "우선순위",
+    "DX과제"
+  ],
+  "icon": "workflow",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 24
+}

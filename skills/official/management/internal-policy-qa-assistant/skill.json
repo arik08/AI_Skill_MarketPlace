@@ -1,0 +1,30 @@
+{
+  "id": "internal-policy-qa-assistant",
+  "name": "내부 규정 Q&A 응답 보조",
+  "short_description": "복무, 구매, 재무 규정 문서를 검색해 직원 문의에 근거 문단과 함께 답변 초안을 제공합니다.",
+  "owner": "유재민 과장",
+  "team": "업무지원실",
+  "downloads": 2034,
+  "likes": 421,
+  "runs": 16520,
+  "success_rate": 97,
+  "quality_score": 95,
+  "category": "경영기획",
+  "type": "MCP Tool형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v2.0.0",
+  "updated_at": "2026.06.22",
+  "tags": [
+    "사내규정",
+    "Q&A",
+    "근거검색",
+    "업무지원"
+  ],
+  "icon": "book-open-check",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 22
+}

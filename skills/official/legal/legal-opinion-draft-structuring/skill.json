@@ -1,0 +1,30 @@
+{
+  "id": "legal-opinion-draft-structuring",
+  "name": "법무 의견서 초안 구조화",
+  "short_description": "질의 내용과 관련 규정을 바탕으로 쟁점, 검토의견, 권고사항 형식의 법무 의견서 초안을 만듭니다.",
+  "owner": "정다은 과장",
+  "team": "법무기획실",
+  "downloads": 537,
+  "likes": 118,
+  "runs": 2870,
+  "success_rate": 93,
+  "quality_score": 87,
+  "category": "법무",
+  "type": "보고서생성형",
+  "status": "Verified",
+  "visibility": "부서 공개",
+  "version": "v1.0.5",
+  "updated_at": "2026.06.11",
+  "tags": [
+    "법무의견서",
+    "쟁점정리",
+    "규정검토",
+    "권고사항"
+  ],
+  "icon": "file-signature",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 15
+}

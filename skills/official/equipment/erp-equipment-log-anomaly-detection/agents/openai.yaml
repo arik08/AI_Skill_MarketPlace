@@ -1,0 +1,7 @@
+interface:
+  display_name: "ERP 설비 가동 로그 이상 감지"
+  short_description: "실시간 설비 제어 로그 데이터를 분석하여 고장 위험 징후 및 보전 조치 사항을 제안합니다."
+  default_prompt: "Use $erp-equipment-log-anomaly-detection to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

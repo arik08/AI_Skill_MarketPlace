@@ -1,0 +1,7 @@
+interface:
+  display_name: "계약 갱신 리마인드 및 변경점 요약"
+  short_description: "만료 예정 계약을 식별하고 전년 대비 단가, 기간, 위약 조항 변경점을 요약합니다."
+  default_prompt: "Use $contract-renewal-change-summary to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

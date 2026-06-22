@@ -1,0 +1,7 @@
+interface:
+  display_name: "예산 품의서 검토 보조"
+  short_description: "예산 품의서의 계정과목, 승인선, 증빙 누락 여부를 체크하고 보완 문구를 제안합니다."
+  default_prompt: "Use $budget-approval-document-review to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

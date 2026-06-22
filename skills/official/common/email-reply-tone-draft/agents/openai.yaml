@@ -1,0 +1,7 @@
+interface:
+  display_name: "메일/메신저 답변 초안 작성"
+  short_description: "업무 요청, 문의, 협조 메일에 대해 상황별 톤을 맞춘 답변 초안을 작성합니다."
+  default_prompt: "Use $email-reply-tone-draft to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

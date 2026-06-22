@@ -1,0 +1,7 @@
+interface:
+  display_name: "법인인감 날인 신청서 실시간 검토"
+  short_description: "날인 대상 서류의 불공정 거래 독소 조항, 손해배상 문맥을 계약 가이드라인에 대조 분석합니다."
+  default_prompt: "Use $corporate-seal-request-review to prepare a practical internal work draft."
+
+policy:
+  allow_implicit_invocation: true

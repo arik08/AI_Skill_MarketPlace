@@ -1,0 +1,30 @@
+{
+  "id": "market-competitor-news-daily-scan",
+  "name": "시장/경쟁사 뉴스 데일리 스캔",
+  "short_description": "지정 경쟁사와 산업 키워드 뉴스를 수집해 요약하고 영향도 높은 이슈를 우선순위로 정리합니다.",
+  "owner": "신동욱 부장",
+  "team": "경영전략실",
+  "downloads": 1118,
+  "likes": 230,
+  "runs": 7742,
+  "success_rate": 93,
+  "quality_score": 88,
+  "category": "경영기획",
+  "type": "API연계형",
+  "status": "Verified",
+  "visibility": "전사 공개",
+  "version": "v1.2.6",
+  "updated_at": "2026.06.13",
+  "tags": [
+    "뉴스요약",
+    "경쟁사",
+    "시장동향",
+    "데일리리포트"
+  ],
+  "icon": "newspaper",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 21
+}

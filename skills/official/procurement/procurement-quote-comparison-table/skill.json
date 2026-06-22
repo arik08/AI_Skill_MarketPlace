@@ -1,0 +1,30 @@
+{
+  "id": "procurement-quote-comparison-table",
+  "name": "구매 견적 비교표 자동 작성",
+  "short_description": "복수 업체 견적서의 단가, 납기, 조건을 표준 비교표로 정리하고 추천 사유를 작성합니다.",
+  "owner": "조현우 대리",
+  "team": "구매본부",
+  "downloads": 1740,
+  "likes": 318,
+  "runs": 11234,
+  "success_rate": 97,
+  "quality_score": 94,
+  "category": "구매",
+  "type": "문서분석형",
+  "status": "Official",
+  "visibility": "전사 공개",
+  "version": "v2.1.0",
+  "updated_at": "2026.06.19",
+  "tags": [
+    "견적비교",
+    "구매품의",
+    "업체평가",
+    "납기조건"
+  ],
+  "icon": "scale",
+  "runtime": "prompt-template",
+  "entrypoint": "SKILL.md",
+  "input_schema": "references/input.schema.json",
+  "example_input": "examples/sample-input.json",
+  "sort_order": 11
+}
