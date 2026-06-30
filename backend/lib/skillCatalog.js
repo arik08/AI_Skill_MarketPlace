@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { cp, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -530,6 +530,29 @@ function createInputSchema(skill) {
       }
     },
     required: ['request']
+  };
+}
+
+export async function deleteSkillPackage(input, skillsRoot = defaultSkillsRoot) {
+  const skill = await readSkillById(input?.skillId, skillsRoot);
+  assertEditableSkill(skill, input);
+
+  if (!skill.source_path?.startsWith('drafts/')) {
+    throw createPublicError('Only draft or fork skills can be deleted', 403);
+  }
+
+  const folder = getSkillFolder(skill, skillsRoot);
+  const draftsRoot = path.resolve(skillsRoot, 'drafts');
+
+  if (folder === draftsRoot || !folder.startsWith(`${draftsRoot}${path.sep}`)) {
+    throw createPublicError('Skill delete path must stay inside drafts', 403);
+  }
+
+  await rm(folder, { recursive: true, force: true });
+
+  return {
+    deletedSkillId: skill.id,
+    source_path: skill.source_path
   };
 }
 

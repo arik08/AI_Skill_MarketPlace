@@ -28,3 +28,15 @@ description: 만료 예정 계약을 식별하고 전년 대비 단가, 기간, 
 - Do not invent numeric facts, legal conclusions, or policy approvals.
 - Flag 개인정보, 계약, 재무 수치, 인사 정보, and confidential material before reuse.
 - Keep the tone practical, specific, and suitable for internal office work.
+
+
+
+
+
+
+
+
+
+
+
+

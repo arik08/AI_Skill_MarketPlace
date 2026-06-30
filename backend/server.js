@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { installSkillForAccount, readInstalledSkillIds } from './lib/installations.js';
-import { createSkillPackage, forkSkillPackage, readSkillCatalog, updateSkillFile } from './lib/skillCatalog.js';
+import { installSkillForAccount, readInstalledSkillIds, removeSkillFromAllInstallations, uninstallSkillForAccount } from './lib/installations.js';
+import { createSkillPackage, deleteSkillPackage, forkSkillPackage, readSkillCatalog, updateSkillFile } from './lib/skillCatalog.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
@@ -107,6 +107,13 @@ async function handleApi(request, response, url) {
     return true;
   }
 
+  // DELETE /api/installations
+  if (request.method === 'DELETE' && url.pathname === '/api/installations') {
+    const installation = await uninstallSkillForAccount(await readRequestJson(request));
+    sendJson(response, 200, installation);
+    return true;
+  }
+
   // POST /api/skills
   if (request.method === 'POST' && url.pathname === '/api/skills') {
     const skill = await createSkillPackage(await readRequestJson(request));
@@ -122,6 +129,18 @@ async function handleApi(request, response, url) {
       skillId: decodeURIComponent(forkMatch[1])
     });
     sendJson(response, 201, skill);
+    return true;
+  }
+
+  const skillMatch = url.pathname.match(/^\/api\/skills\/([^/]+)$/);
+  // DELETE /api/skills/:skillId
+  if (request.method === 'DELETE' && skillMatch) {
+    const result = await deleteSkillPackage({
+      ...await readRequestJson(request),
+      skillId: decodeURIComponent(skillMatch[1])
+    });
+    await removeSkillFromAllInstallations(result.deletedSkillId);
+    sendJson(response, 200, result);
     return true;
   }
 

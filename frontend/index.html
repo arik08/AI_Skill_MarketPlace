@@ -12,47 +12,46 @@
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <!-- Toast Notification Overlay -->
-    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2"></div>
-
     <!-- Header Navigation -->
-    <header class="shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-40 px-3 sm:px-4 py-2 flex items-center gap-3 shadow-sm">
-        <div class="flex items-center gap-2.5">
-            <div class="bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-lg shadow-lg shadow-blue-500/10">
-                <i data-lucide="book-open-check" class="w-5 h-5 text-white"></i>
-            </div>
-            <div>
-                <span class="text-[11px] font-bold tracking-wider text-blue-600 block uppercase">POSCO Enterprise Portal</span>
-                <h1 class="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent flex items-center gap-2 keep-korean">
-                    AI Skill MarketPlace
-                </h1>
-            </div>
-        </div>
-
-        <nav class="hidden md:flex items-center gap-1 ml-auto">
-            <button onclick="switchView('marketplace')" id="nav-marketplace" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-100 text-slate-800 shadow-inner">
-                <i data-lucide="store" class="w-4 h-4"></i> 마켓플레이스
-            </button>
-            <button onclick="openRegisterModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
-                <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i> 신규 스킬 등록
-            </button>
-            <button onclick="showToast('이 기능은 준비 중입니다.', 'info')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
-                <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i> 관리자 심사
-            </button>
-            <button onclick="openAdminMode()" id="nav-admin-mode" title="관리자 모드" aria-label="관리자 모드" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
-                <i data-lucide="key-round" class="w-4 h-4"></i>
-            </button>
-        </nav>
-
-        <div class="flex items-center gap-2">
-            <!-- Simple User profile info -->
-            <div class="flex items-center gap-2.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-                <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs ring-2 ring-indigo-500/10">
-                    오
+    <header class="shrink-0 border-b border-slate-200 bg-white/95 backdrop-blur sticky top-0 z-40 py-2 shadow-sm">
+        <div class="max-w-[1840px] mx-auto w-full px-4 flex items-center gap-3">
+            <button type="button" onclick="returnToMarketplaceHome()" class="min-w-0 flex items-center gap-2.5 rounded-xl pr-2 text-left transition-colors hover:bg-slate-50 focus:outline-none focus:ring-0" aria-label="마켓플레이스 초기 화면으로 이동">
+                <div class="shrink-0 bg-gradient-to-tr from-blue-600 to-indigo-500 p-2 rounded-lg shadow-lg shadow-blue-500/10">
+                    <i data-lucide="book-open-check" class="w-5 h-5 text-white"></i>
                 </div>
-                <div class="hidden sm:block text-left">
-                    <span class="block text-[10px] text-slate-500 font-medium">경영기획DX추진TF팀</span>
-                    <span class="block text-xs font-semibold text-slate-700">오명철 과장</span>
+                <div class="min-w-0">
+                    <span class="text-[11px] font-bold tracking-wider text-blue-600 block uppercase truncate">POSCO Enterprise Portal</span>
+                    <h1 class="text-base sm:text-lg font-black tracking-tight bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600 bg-clip-text text-transparent flex items-center gap-2 keep-korean">
+                        AI Skill MarketPlace
+                    </h1>
+                </div>
+            </button>
+
+            <nav class="hidden md:flex items-center gap-1 ml-auto">
+                <button onclick="switchView('marketplace')" id="nav-marketplace" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all bg-slate-100 text-slate-800 shadow-inner">
+                    <i data-lucide="store" class="w-4 h-4"></i> 마켓플레이스
+                </button>
+                <button onclick="openRegisterModal()" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i> 신규 스킬 등록
+                </button>
+                <button onclick="showToast('이 기능은 준비 중입니다.', 'info')" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-all">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-indigo-600"></i> 관리자 심사
+                </button>
+                <button onclick="openAdminMode()" id="nav-admin-mode" title="관리자 모드" aria-label="관리자 모드" class="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-all">
+                    <i data-lucide="key-round" class="w-4 h-4"></i>
+                </button>
+            </nav>
+
+            <div class="ml-auto md:ml-0 shrink-0 flex items-center gap-2">
+                <!-- Simple User profile info -->
+                <div class="flex items-center gap-2.5 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
+                    <div class="w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-xs ring-2 ring-indigo-500/10">
+                        오
+                    </div>
+                    <div class="hidden sm:block text-left">
+                        <span class="block text-[10px] text-slate-500 font-medium">경영기획DX추진TF팀</span>
+                        <span class="block text-xs font-semibold text-slate-700">오명철 과장</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -61,12 +60,12 @@
     <!-- Main Workspace Container -->
     <main class="flex-1 min-h-0 flex flex-col overflow-hidden">
         <!-- MODE 1: Marketplace Home View -->
-        <section id="view-marketplace" class="flex-1 min-h-0 overflow-y-auto lg:overflow-hidden p-4 max-w-7xl mx-auto w-full flex flex-col gap-4">
+        <section id="view-marketplace" class="flex-1 min-h-0 overflow-y-auto xl:overflow-hidden p-4 max-w-[1840px] mx-auto w-full flex flex-col gap-4">
             <!-- Dashboard Quick Recommend & Filter -->
-            <div class="grid grid-cols-1 lg:grid-cols-4 lg:grid-rows-[minmax(0,1fr)] gap-4 items-start lg:items-stretch lg:flex-1 min-h-0 overflow-visible lg:overflow-hidden">
+            <div class="marketplace-shell grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] xl:grid-rows-[minmax(0,1fr)] gap-4 items-start xl:items-stretch xl:flex-1 min-h-0 overflow-visible xl:overflow-hidden">
                 
                 <!-- Left Filter Panel -->
-                <aside class="filter-sidebar lg:col-span-1 lg:h-full min-h-0 overflow-visible lg:overflow-y-auto bg-white border border-slate-200 rounded-xl p-4 lg:pr-2 space-y-5 shadow-sm">
+                <aside class="marketplace-filter-panel filter-sidebar xl:h-full min-h-0 overflow-visible xl:overflow-y-auto bg-white border border-slate-200 rounded-xl p-4 xl:pr-2 shadow-sm">
                     <div class="flex items-center justify-between border-b border-slate-100 pb-3">
                         <h3 class="font-bold text-slate-800 flex items-center gap-2 text-sm">
                             <i data-lucide="sliders-horizontal" class="w-4 h-4 text-blue-600"></i> 상세 필터
@@ -109,7 +108,7 @@
                     <!-- Category / Workspaces -->
                     <div class="space-y-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">업무 영역</h4>
-                        <div class="flex flex-col gap-1" id="filter-category">
+                        <div class="grid grid-cols-2 gap-1" id="filter-category">
                             <!-- Populated dynamic -->
                         </div>
                     </div>
@@ -117,7 +116,7 @@
                     <!-- Skill Type -->
                     <div class="space-y-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">스킬 유형</h4>
-                        <div class="flex flex-col gap-1" id="filter-type">
+                        <div class="grid grid-cols-2 gap-1" id="filter-type">
                             <!-- Populated dynamic -->
                         </div>
                     </div>
@@ -125,7 +124,7 @@
                     <!-- Verification Status -->
                     <div class="space-y-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">검증 상태</h4>
-                        <div class="flex flex-col gap-1" id="filter-status">
+                        <div class="grid grid-cols-2 gap-1" id="filter-status">
                             <!-- Populated dynamic -->
                         </div>
                     </div>
@@ -133,27 +132,27 @@
                     <!-- Visibility Scope -->
                     <div class="space-y-2">
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">공개 권한</h4>
-                        <div class="flex flex-col gap-1.5" id="filter-visibility">
+                        <div class="grid grid-cols-2 gap-1" id="filter-visibility">
                             <!-- Populated dynamic -->
                         </div>
                     </div>
                 </aside>
 
                 <!-- Right Skill Marketplace Content -->
-                <div class="lg:col-span-3 lg:h-full min-h-0 flex flex-col overflow-visible lg:overflow-hidden gap-3">
+                <div class="marketplace-results-panel xl:h-full min-h-0 flex flex-col overflow-visible xl:overflow-hidden gap-2">
                     
                     <!-- Sorting & Quick Info -->
-                    <div class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
-                        <div class="text-sm text-slate-500">
+                    <div class="shrink-0 flex flex-col sm:flex-row items-center justify-between gap-2 bg-white px-2 py-1.5 rounded-lg border border-slate-200/80">
+                        <div class="text-xs text-slate-500">
                             총 <span id="skills-count" class="font-bold text-blue-600">0</span>개의 AI 스킬 검색됨
                         </div>
                         <div class="flex flex-wrap items-center justify-end gap-2">
-                            <div class="flex items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 p-1">
-                                <button id="view-mode-detail" onclick="setCatalogViewMode('detail')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors">상세</button>
-                                <button id="view-mode-summary" onclick="setCatalogViewMode('summary')" class="px-2.5 py-1 text-xs font-semibold rounded-md transition-colors">요약</button>
+                            <div class="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 p-0.5">
+                                <button id="view-mode-detail" onclick="setCatalogViewMode('detail')" class="px-2 py-0.5 text-xs font-semibold rounded transition-colors">상세</button>
+                                <button id="view-mode-summary" onclick="setCatalogViewMode('summary')" class="px-2 py-0.5 text-xs font-semibold rounded transition-colors">요약</button>
                             </div>
                             <label class="text-xs text-slate-500 whitespace-nowrap">정렬 조건</label>
-                            <select id="sort-select" onchange="handleSort()" class="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-lg py-1.5 pl-2.5 pr-8 focus:ring-1 focus:ring-blue-500 focus:outline-none">
+                            <select id="sort-select" onchange="handleSort()" class="bg-slate-50 border border-slate-200 text-xs text-slate-700 rounded-md py-1 pl-2 pr-7 focus:ring-1 focus:ring-blue-500 focus:outline-none">
                                 <option value="recommended">내 업무 추천순 🌟</option>
                                 <option value="download">다운로드 많은순 ⬇</option>
                                 <option value="run">실행 횟수순 ▶</option>
@@ -165,12 +164,12 @@
                     </div>
 
                     <!-- Active Tag Badges -->
-                    <div id="active-filter-badges" class="shrink-0 flex flex-wrap gap-2 items-center">
+                    <div id="active-filter-badges" class="hidden shrink-0 flex-wrap gap-2 items-center">
                         <!-- Dynamic badges based on filters -->
                     </div>
 
                     <!-- Skills Cards Grid -->
-                    <div id="skills-grid" class="lg:flex-1 lg:min-h-0 overflow-visible lg:overflow-y-auto pr-1 pb-2 grid grid-cols-1 md:grid-cols-2 auto-rows-max gap-4 content-start vscode-scrollbar">
+                    <div id="skills-grid" class="marketplace-skills-grid xl:flex-1 xl:min-h-0 overflow-visible xl:overflow-y-auto pr-1 pb-2 grid auto-rows-max gap-4 content-start vscode-scrollbar">
                         <!-- Populated dynamically via JS -->
                     </div>
                 </div>
@@ -181,45 +180,75 @@
         <section id="view-detail" class="hidden flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
             
             <!-- VS Code Title Bar / Top Info Header -->
-            <div class="shrink-0 bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="shrink-0 bg-slate-50 border-b border-slate-200 px-6 py-4 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
                 
                 <!-- Back Button & Title block -->
-                <div class="flex items-center gap-4">
-                    <button onclick="switchView('marketplace')" class="p-2 hover:bg-slate-200/60 text-slate-500 hover:text-slate-800 rounded-lg transition-colors" title="마켓플레이스로 이동">
+                <div class="min-w-0 flex flex-1 items-center gap-4">
+                    <button onclick="navigateBackToCatalog()" class="p-2 hover:bg-slate-200/60 text-slate-500 hover:text-slate-800 rounded-lg transition-colors" title="마켓플레이스로 이동">
                         <i data-lucide="arrow-left" class="w-5 h-5"></i>
                     </button>
-                    <div>
-                        <div class="flex items-center gap-2">
-                            <div id="detail-icon-wrapper" class="p-1.5 rounded bg-slate-200 text-slate-700">
-                                <!-- Dynamic Icon -->
-                            </div>
-                            <h2 id="detail-skill-name" class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <div class="min-w-0">
+                        <div class="flex min-w-0 flex-wrap items-center gap-2">
+                            <h2 id="detail-skill-name" class="min-w-0 text-lg font-bold text-slate-800 flex items-center gap-2 keep-korean">
                                 <!-- Dynamic Name -->
                             </h2>
                             <span id="detail-status-badge"></span>
+                            <button id="btn-edit-skill-meta" onclick="openSkillMetaEditor()" class="hidden h-7 w-7 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 shadow-sm transition-colors hover:border-blue-200 hover:text-blue-600" title="스킬 정보 수정" aria-label="스킬 정보 수정">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
                         </div>
-                        <p id="detail-short-desc" class="text-xs text-slate-500 mt-1">
+                        <p id="detail-short-desc" class="text-xs text-slate-500 mt-1 keep-korean">
                             <!-- Dynamic short description -->
                         </p>
                     </div>
                 </div>
 
                 <!-- Dynamic Action Buttons -->
-                <div class="flex flex-wrap items-center gap-2 self-stretch md:self-auto justify-end">
-                    <button id="btn-like" onclick="triggerAction('like')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+                <div class="flex w-full flex-wrap items-center justify-start gap-2 lg:w-auto lg:max-w-[48rem] lg:justify-end">
+                    <button id="btn-like" onclick="triggerAction('like')" class="detail-action-button flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
                         <i data-lucide="thumbs-up" class="w-3.5 h-3.5 text-pink-500"></i> 좋아요 <span id="detail-like-cnt" class="text-slate-800 ml-0.5"></span>
                     </button>
-                    <button id="btn-install" onclick="triggerAction('install')" class="flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
+                    <button id="btn-install" onclick="triggerAction('install')" class="detail-action-button flex items-center gap-1.5 px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
                         <i data-lucide="download" class="w-3.5 h-3.5"></i> 설치하기
                     </button>
-                    <button id="btn-run" onclick="triggerAction('run')" class="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
+                    <button id="btn-run" onclick="triggerAction('run')" class="detail-action-button flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-lg text-xs font-semibold transition-colors shadow-sm">
                         <i data-lucide="play" class="w-3.5 h-3.5"></i> 실행해보기
                     </button>
-                    <button id="btn-fork" onclick="triggerAction('fork')" class="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
+                    <button id="btn-fork" onclick="triggerAction('fork')" class="detail-action-button flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
                         <i data-lucide="git-fork" class="w-3.5 h-3.5 text-blue-600"></i> 복제하기 (Fork)
                     </button>
                 </div>
             </div>
+
+            <form id="skill-meta-editor" onsubmit="saveSkillMetaEdit(event)" class="hidden shrink-0 border-b border-slate-200 bg-white px-6 py-3">
+                <div class="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(12rem,18rem)_minmax(16rem,1fr)_8rem_auto] lg:items-end">
+                    <label class="min-w-0 space-y-1 text-xs font-semibold text-slate-500">
+                        <span>스킬명</span>
+                        <input id="skill-meta-name" type="text" required maxlength="80" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
+                    </label>
+                    <label class="min-w-0 space-y-1 text-xs font-semibold text-slate-500">
+                        <span>한 줄 설명</span>
+                        <input id="skill-meta-short-description" type="text" required maxlength="180" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
+                    </label>
+                    <label class="min-w-0 space-y-1 text-xs font-semibold text-slate-500">
+                        <span>상태</span>
+                        <select id="skill-meta-status" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-800 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-2 focus:ring-blue-100">
+                            <option value="Official">Official</option>
+                            <option value="Verified">Verified</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Community">Community</option>
+                        </select>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <button id="btn-save-skill-meta" type="submit" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-blue-500">
+                            <i data-lucide="save" class="w-3.5 h-3.5"></i> 저장
+                        </button>
+                        <button type="button" onclick="closeSkillMetaEditor()" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50">
+                            <i data-lucide="x" class="w-3.5 h-3.5"></i> 취소
+                        </button>
+                    </div>
+                </div>
+            </form>
 
             <!-- Sub Metadata strip -->
             <div class="shrink-0 bg-white px-6 py-2 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2 border-b border-slate-200">
@@ -238,10 +267,10 @@
             </div>
 
             <!-- 2-Split Workspace (Left Explorer, Right Content Pane) -->
-            <div class="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
+            <div class="detail-workspace flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">
                 
                 <!-- Left Sidebar (Explorer) -->
-                <aside class="w-full md:w-64 h-64 md:h-auto min-h-0 bg-slate-100 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col select-none">
+                <aside class="detail-explorer w-full md:w-64 h-64 md:h-auto min-h-0 bg-slate-100 border-b md:border-b-0 md:border-r border-slate-200 flex flex-col select-none">
                     
                     <!-- Sidebar Section Title -->
                     <div class="shrink-0 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between bg-slate-200/50 border-b border-slate-200">
@@ -270,7 +299,7 @@
                 </aside>
 
                 <!-- Right Code Editor/MD Document Viewer Pane -->
-                <main class="flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
+                <main class="detail-document-pane flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
                     
                     <!-- Document Tab Bar -->
                     <div class="shrink-0 bg-slate-100 border-b border-slate-200 flex flex-wrap items-center px-4 justify-between gap-2">
@@ -281,7 +310,6 @@
                             </div>
                         </div>
                         <div class="ml-auto flex items-center gap-2 py-1">
-                            <span id="editor-mode-label" class="whitespace-nowrap text-right text-[10px] font-mono text-slate-400 uppercase tracking-wide">VIEW MODE: READ-ONLY PREVIEW</span>
                             <button id="btn-edit-file" onclick="startFileEdit()" class="hidden items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition-colors">
                                 <i data-lucide="pencil" class="w-3.5 h-3.5 text-blue-600"></i> 수정
                             </button>

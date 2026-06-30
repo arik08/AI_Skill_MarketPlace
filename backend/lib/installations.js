@@ -71,3 +71,42 @@ export async function installSkillForAccount(input, root = defaultInstallationsR
     skillIds: store.accounts[accountId]
   };
 }
+
+export async function uninstallSkillForAccount(input, root = defaultInstallationsRoot) {
+  const accountId = normalizeId(input?.accountId, 'accountId');
+  const skillId = normalizeId(input?.skillId, 'skillId');
+  const store = await readInstallationStore(root);
+  const existing = Array.isArray(store.accounts[accountId])
+    ? store.accounts[accountId]
+    : [];
+
+  store.accounts[accountId] = existing
+    .map((existingSkillId) => String(existingSkillId).trim())
+    .filter((existingSkillId) => existingSkillId && existingSkillId !== skillId);
+  await writeInstallationStore(root, store);
+
+  return {
+    accountId,
+    skillIds: store.accounts[accountId]
+  };
+}
+
+export async function removeSkillFromAllInstallations(skillId, root = defaultInstallationsRoot) {
+  const normalizedSkillId = normalizeId(skillId, 'skillId');
+  const store = await readInstallationStore(root);
+
+  for (const [accountId, skillIds] of Object.entries(store.accounts)) {
+    if (!Array.isArray(skillIds)) {
+      store.accounts[accountId] = [];
+      continue;
+    }
+
+    store.accounts[accountId] = skillIds
+      .map((existingSkillId) => String(existingSkillId).trim())
+      .filter((existingSkillId) => existingSkillId && existingSkillId !== normalizedSkillId);
+  }
+
+  await writeInstallationStore(root, store);
+
+  return store;
+}

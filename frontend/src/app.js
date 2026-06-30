@@ -7,6 +7,7 @@ const CURRENT_ACCOUNT = {
 };
 const ADMIN_ACCESS_PASSWORD = '1';
 const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
+const MARKDOWN_VIEW_MODE_STORAGE_KEY = 'skill-marketplace:markdown-view-mode';
 
 // Global States
         let currentSkills = [];
@@ -29,9 +30,11 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
         let currentRegStep = 1;
         let currentFilePath = '';
         let currentFileContent = '';
-        let markdownViewMode = 'rendered';
+        let markdownViewMode = readMarkdownViewMode();
         let isEditingFile = false;
         let isSavingFile = false;
+        let isEditingSkillMeta = false;
+        let isSavingSkillMeta = false;
         const personalFilterPalettes = {
             installed: {
                 base: { bg: '#e0e7ff', border: '#818cf8', text: '#3730a3', badgeText: '#3730a3', shadow: '0 4px 12px rgba(79, 70, 229, 0.12)' },
@@ -73,6 +76,11 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
         });
 
         window.addEventListener('popstate', handleCatalogHistoryNavigation);
+
+        function readMarkdownViewMode() {
+            const savedMode = sessionStorage.getItem(MARKDOWN_VIEW_MODE_STORAGE_KEY);
+            return ['rendered', 'source'].includes(savedMode) ? savedMode : 'rendered';
+        }
 
         async function loadSkillCatalog() {
             try {
@@ -122,44 +130,9 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             }
         }
 
-        // Helper to show modern Toast messages without using window.alert
+        // Keep old inline handlers stable while suppressing toast banners.
         function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            
-            const bgClass = {
-                success: 'bg-emerald-50 border-emerald-200 text-emerald-800 shadow-lg',
-                error: 'bg-rose-50 border-rose-200 text-rose-800 shadow-lg',
-                info: 'bg-blue-50 border-blue-200 text-blue-800 shadow-lg'
-            }[type];
-
-            const iconName = {
-                success: 'check-circle-2',
-                error: 'alert-triangle',
-                info: 'info'
-            }[type];
-
-            toast.className = `flex items-center gap-2.5 px-4 py-3.5 rounded-xl border ${bgClass} transition-all duration-300 transform translate-y-2 opacity-0 text-xs font-semibold max-w-sm`;
-            toast.innerHTML = `
-                <i data-lucide="${iconName}" class="w-4.5 h-4.5 shrink-0"></i>
-                <div class="flex-1">${message}</div>
-            `;
-            
-            container.appendChild(toast);
-            lucide.createIcons({attrs: {"stroke-width": 2}, nameAttr: "data-lucide", scope: toast});
-
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 50);
-
-            // Hide and remove
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3000);
+            return { message, type, suppressed: true };
         }
 
         // View Switching Mechanism
@@ -261,7 +234,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             const categories = ['전체', '공통', '투자관리', '사업관리', '경영기획', '재무', '구매', '설비', '법무', 'HR'];
             const catContainer = document.getElementById('filter-category');
             catContainer.innerHTML = categories.map(cat => `
-                <button onclick="setFilter('category', '${cat}')" class="filter-btn text-left text-xs px-3 py-2 rounded-lg transition-all ${activeFilters.category === cat ? 'bg-blue-50 text-blue-700 border border-blue-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
+                <button onclick="setFilter('category', '${cat}')" class="filter-btn min-w-0 text-left text-xs px-2.5 py-2 rounded-lg transition-all keep-korean ${activeFilters.category === cat ? 'bg-blue-50 text-blue-700 border border-blue-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
                     ${cat}
                 </button>
             `).join('');
@@ -270,7 +243,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             const types = ['전체', '프롬프트형', '문서분석형', '데이터분석형', '보고서생성형', 'API연계형', 'MCP Tool형'];
             const typeContainer = document.getElementById('filter-type');
             typeContainer.innerHTML = types.map(t => `
-                <button onclick="setFilter('type', '${t}')" class="filter-btn text-left text-xs px-3 py-2 rounded-lg transition-all ${activeFilters.type === t ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
+                <button onclick="setFilter('type', '${t}')" class="filter-btn min-w-0 text-left text-xs px-2.5 py-2 rounded-lg transition-all keep-korean ${activeFilters.type === t ? 'bg-indigo-50 text-indigo-700 border border-indigo-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
                     ${t}
                 </button>
             `).join('');
@@ -280,7 +253,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             const statusContainer = document.getElementById('filter-status');
             statusContainer.innerHTML = statuses.map(st => {
                 return `
-                    <button onclick="setFilter('status', '${st}')" class="filter-btn text-left text-xs px-3 py-2 rounded-lg transition-all ${activeFilters.status === st ? 'bg-slate-200 text-slate-800 font-semibold border border-slate-300' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
+                    <button onclick="setFilter('status', '${st}')" class="filter-btn min-w-0 text-left text-xs px-2.5 py-2 rounded-lg transition-all keep-korean ${activeFilters.status === st ? 'bg-slate-200 text-slate-800 font-semibold border border-slate-300' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
                         ${st === '전체' ? '전체' : `• ${st}`}
                     </button>
                 `;
@@ -290,7 +263,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             const visibilities = ['전체', '전사 공개', '부서 공개'];
             const visContainer = document.getElementById('filter-visibility');
             visContainer.innerHTML = visibilities.map(v => `
-                <button onclick="setFilter('visibility', '${v}')" class="filter-btn text-left text-xs px-3 py-2 rounded-lg transition-all ${activeFilters.visibility === v ? 'bg-purple-50 text-purple-700 border border-purple-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
+                <button onclick="setFilter('visibility', '${v}')" class="filter-btn min-w-0 text-left text-xs px-2.5 py-2 rounded-lg transition-all keep-korean ${activeFilters.visibility === v ? 'bg-purple-50 text-purple-700 border border-purple-200/60 font-semibold' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'}">
                     ${v}
                 </button>
             `).join('');
@@ -355,6 +328,10 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                 && skill.owner === CURRENT_ACCOUNT.name;
 
             return isDraft && (forkedByAccount || ownDraft);
+        }
+
+        function canCurrentAccountDeleteDraftSkill(skill) {
+            return isCurrentAccountDraftSkill(skill);
         }
 
         function handleSearch() {
@@ -487,6 +464,8 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             }
 
             container.innerHTML = badgesHTML;
+            container.classList.toggle('hidden', badgesHTML.trim() === '');
+            container.classList.toggle('flex', badgesHTML.trim() !== '');
             lucide.createIcons();
         }
 
@@ -629,6 +608,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
 
         function handleCatalogHistoryNavigation(event) {
             const catalogState = event.state?.catalog;
+            const detailState = event.state?.detail;
 
             if (catalogState) {
                 activeFilters = { ...defaultFilters, ...catalogState.filters };
@@ -640,6 +620,15 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             }
 
             refreshCatalogResults();
+
+            if (detailState?.skillId) {
+                activeSkillId = detailState.skillId;
+                loadSkillDetail(detailState.skillId);
+                switchView('detail');
+                return;
+            }
+
+            switchView('marketplace');
         }
 
         function normalizePersonalFilterMode() {
@@ -655,6 +644,13 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                     sort: currentSort,
                     viewMode: catalogViewMode
                 }
+            };
+        }
+
+        function createDetailHistoryState(skillId) {
+            return {
+                ...createCatalogHistoryState(),
+                detail: { skillId }
             };
         }
 
@@ -702,6 +698,26 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             history.pushState(createCatalogHistoryState(), '', createCatalogUrl());
         }
 
+        function pushDetailHistory(skillId) {
+            history.pushState(createDetailHistoryState(skillId), '', createCatalogUrl());
+        }
+
+        function navigateBackToCatalog() {
+            if (history.state?.detail) {
+                history.back();
+                return;
+            }
+
+            switchView('marketplace');
+            history.replaceState(createCatalogHistoryState(), '', createCatalogUrl());
+        }
+
+        function returnToMarketplaceHome() {
+            resetFilters();
+            switchView('marketplace');
+            history.replaceState(createCatalogHistoryState(), '', createCatalogUrl());
+        }
+
         // Render Skill Cards to GRID
         function renderSkillCards(skills) {
             const grid = document.getElementById('skills-grid');
@@ -737,28 +753,22 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                 return `
                     <div data-skill-id="${skill.id}" class="bg-white hover:bg-slate-50/50 border border-slate-200 hover:border-slate-300 rounded-2xl p-5 transition-all flex flex-col justify-between group relative overflow-hidden shadow-sm hover:shadow-md">
                         
-                        <!-- Header Line with Icon / Status Badge -->
+                        <!-- Header Line with Status Badge -->
                         <div>
                             <div class="flex items-start justify-between gap-2 mb-3">
-                                <div class="flex items-center gap-3">
-                                    <div class="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-indigo-600 group-hover:text-indigo-700">
-                                        <i data-lucide="${skill.icon || 'cpu'}" class="w-5 h-5"></i>
-                                    </div>
-                                    <div>
-                                        <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">${skill.type}</span>
-                                        <h3 class="font-bold text-slate-800 transition-colors text-sm sm:text-base flex items-center gap-1.5">
-                                            ${skill.name}
-                                            ${isInstalled ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">설치됨</span>' : ''}
-                                        </h3>
-                                    </div>
+                                <div class="min-w-0">
+                                    <span class="inline-block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">${skill.type}</span>
+                                    <h3 class="font-bold text-slate-800 transition-colors text-sm sm:text-base flex items-center gap-1.5 keep-korean">
+                                        ${skill.name}
+                                    </h3>
                                 </div>
-                                <span class="text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
+                                <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
                                     ${skill.status}
                                 </span>
                             </div>
 
                             <!-- Description -->
-                            <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                            <p class="skill-card-description text-xs text-slate-500 leading-relaxed mb-4">
                                 ${skill.short_description}
                             </p>
 
@@ -788,9 +798,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
 
                             <!-- Interactive Buttons inside Card -->
                             <div class="grid grid-cols-2 gap-2 pt-1">
-                                <button onclick="quickAction('${skill.id}', 'install')" class="w-full py-1.5 ${isInstalled ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 border-slate-200/50'} font-semibold text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center gap-1 border">
-                                    <i data-lucide="${isInstalled ? 'package-check' : 'download'}" class="w-3 h-3"></i> ${isInstalled ? '설치됨' : '설치'}
-                                </button>
+                                ${renderCatalogPrimaryActionButton(skill)}
                                 <button onclick="viewSkillDetails('${skill.id}')" class="w-full py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold text-xs rounded-lg transition-all active:scale-95 border border-blue-200/50 hover:border-transparent flex items-center justify-center gap-1">
                                     상세보기 <i data-lucide="chevron-right" class="w-3 h-3"></i>
                                 </button>
@@ -812,30 +820,66 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             return 'bg-slate-100 text-slate-600 border-slate-200';
         }
 
+        function renderCatalogPrimaryActionButton(skill, options = {}) {
+            if (canCurrentAccountDeleteDraftSkill(skill)) {
+                return renderDeleteDraftActionButton(skill, options);
+            }
+
+            return renderInstallActionButton(skill, options);
+        }
+
+        function renderDeleteDraftActionButton(skill, options = {}) {
+            const showIcon = options.showIcon !== false;
+            const iconMarkup = showIcon ? '<i data-lucide="trash-2" class="w-3 h-3"></i>' : '';
+
+            return `
+                <button onclick="quickAction('${skill.id}', 'delete-draft')" class="draft-delete-action-button w-full py-1.5 bg-red-50 hover:bg-red-100 text-red-700 border-red-200 hover:border-red-300 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1 border">
+                    ${iconMarkup}
+                    <span>삭제</span>
+                </button>
+            `;
+        }
+
+        function renderInstallActionButton(skill, options = {}) {
+            const isInstalled = installedSkillIds.has(skill.id);
+            const showIcon = options.showIcon !== false;
+            const iconMarkup = showIcon
+                ? `<i data-lucide="download" class="install-default-icon w-3 h-3"></i><i data-lucide="trash-2" class="install-hover-icon w-3 h-3"></i>`
+                : '';
+
+            return `
+                <button onclick="quickAction('${skill.id}', '${isInstalled ? 'uninstall' : 'install'}')" class="install-action-button ${isInstalled ? 'is-installed bg-indigo-50 text-indigo-700 border-indigo-100' : 'is-uninstalled bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 border-slate-200/50'} w-full py-1.5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-1 border">
+                    ${iconMarkup}
+                    <span class="install-default-label">${isInstalled ? '설치됨' : '설치'}</span>
+                    ${isInstalled ? '<span class="install-hover-label">삭제</span>' : ''}
+                </button>
+            `;
+        }
+
         function renderSummarySkillCards(grid, skills) {
             grid.innerHTML = skills.map(skill => {
                 const isInstalled = installedSkillIds.has(skill.id);
                 const badgeClass = getStatusBadgeClass(skill.status);
 
                 return `
-                    <div data-skill-id="${skill.id}" class="bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4 transition-all shadow-sm hover:shadow-md">
+                    <div data-skill-id="${skill.id}" class="h-full bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-4 transition-all shadow-sm hover:shadow-md flex flex-col">
                         <div class="flex items-start justify-between gap-3">
                             <div class="min-w-0">
                                 <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">${skill.type}</span>
                                 <h3 class="font-bold text-slate-800 text-sm leading-snug flex flex-wrap items-center gap-1.5 keep-korean">
                                     ${skill.name}
-                                    ${isInstalled ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">설치됨</span>' : ''}
                                 </h3>
+                                <p class="summary-skill-description keep-korean mt-1.5 text-xs leading-relaxed text-slate-500">
+                                    ${skill.short_description}
+                                </p>
                             </div>
                             <span class="shrink-0 text-[10px] font-bold px-2 py-0.5 rounded border ${badgeClass}">
                                 ${skill.status}
                             </span>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2 mt-4">
-                            <button onclick="quickAction('${skill.id}', 'install')" class="w-full py-1.5 ${isInstalled ? 'bg-indigo-50 text-indigo-700 border-indigo-100' : 'bg-slate-100 hover:bg-indigo-600 hover:text-white text-slate-700 border-slate-200/50'} font-semibold text-xs rounded-lg transition-all active:scale-95 flex items-center justify-center border">
-                                ${isInstalled ? '설치됨' : '설치'}
-                            </button>
+                        <div class="grid grid-cols-2 gap-2 mt-auto pt-4">
+                            ${renderCatalogPrimaryActionButton(skill, { showIcon: false })}
                             <button onclick="viewSkillDetails('${skill.id}')" class="w-full py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-700 font-semibold text-xs rounded-lg transition-all active:scale-95 border border-blue-200/50 hover:border-transparent flex items-center justify-center">
                                 상세보기
                             </button>
@@ -852,6 +896,10 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
 
             if (type === 'install') {
                 await installSkillForCurrentAccount(skill);
+            } else if (type === 'uninstall') {
+                await uninstallSkillForCurrentAccount(skill);
+            } else if (type === 'delete-draft') {
+                await deleteDraftSkillForCurrentAccount(skill);
             }
         }
 
@@ -884,17 +932,83 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                 skill.downloads++;
             }
 
-            activeFilters.myInstalled = true;
             refreshCatalogResults();
-            pushCatalogHistory();
             updateDetailInstallButton();
             showToast(`[${skill.name}] 스킬이 ${CURRENT_ACCOUNT.name} 계정에 설치되었습니다.`, 'success');
+        }
+
+        async function uninstallSkillForCurrentAccount(skill) {
+            try {
+                const response = await fetch('/api/installations', {
+                    method: 'DELETE',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        accountId: CURRENT_ACCOUNT.id,
+                        skillId: skill.id
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Installations API returned ${response.status}`);
+                }
+
+                const payload = await response.json();
+                installedSkillIds = new Set(Array.isArray(payload.skillIds)
+                    ? payload.skillIds
+                    : [...installedSkillIds].filter(skillId => skillId !== skill.id));
+            } catch (error) {
+                console.warn('Falling back to local installation removal.', error);
+                installedSkillIds.delete(skill.id);
+                writeLocalInstalledSkillIds(installedSkillIds);
+            }
+
+            refreshCatalogResults();
+            updateDetailInstallButton();
+            showToast(`[${skill.name}] 스킬 설치를 삭제했습니다.`, 'info');
+        }
+
+        async function deleteDraftSkillForCurrentAccount(skill) {
+            if (!canCurrentAccountDeleteDraftSkill(skill)) {
+                showToast('내 Draft/Fork 스킬만 삭제할 수 있습니다.', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/skills/${encodeURIComponent(skill.id)}`, {
+                    method: 'DELETE',
+                    headers: { 'content-type': 'application/json' },
+                    body: JSON.stringify({
+                        accountId: CURRENT_ACCOUNT.id,
+                        accountName: CURRENT_ACCOUNT.name
+                    })
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.error || `Skill delete failed with ${response.status}`);
+                }
+
+                currentSkills = currentSkills.filter(candidate => candidate.id !== skill.id);
+                installedSkillIds.delete(skill.id);
+                refreshCatalogResults();
+
+                if (activeSkillId === skill.id) {
+                    activeSkillId = null;
+                    navigateBackToCatalog();
+                }
+
+                showToast(`[${skill.name}] Draft/Fork 스킬을 삭제했습니다.`, 'info');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || 'Draft/Fork 스킬 삭제에 실패했습니다.', 'error');
+            }
         }
 
         // View Mode 2: Skill Explorer Loading
         function viewSkillDetails(skillId) {
             activeSkillId = skillId;
             loadSkillDetail(skillId);
+            pushDetailHistory(skillId);
             switchView('detail');
         }
 
@@ -904,7 +1018,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             if (!skill) return;
 
             // Header Elements update
-            document.getElementById('detail-skill-name').innerHTML = `${skill.name}`;
+            document.getElementById('detail-skill-name').textContent = skill.name;
             document.getElementById('detail-short-desc').textContent = skill.short_description;
             document.getElementById('detail-owner').textContent = `${skill.owner} / ${skill.team}`;
             document.getElementById('detail-version').textContent = skill.version;
@@ -924,16 +1038,13 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             else statusBadge.className += ' bg-amber-50 text-amber-700 border-amber-200';
             statusBadge.textContent = skill.status;
 
-            // Icon Header update
-            const iconWrap = document.getElementById('detail-icon-wrapper');
-            iconWrap.innerHTML = `<i data-lucide="${skill.icon || 'cpu'}" class="w-4 h-4 text-indigo-600"></i>`;
-
             // Sidebar Explorer Score Bar Update
             document.getElementById('quality-indicator-score').textContent = `${skill.quality_score}/100`;
             document.getElementById('quality-indicator-bar').style.width = `${skill.quality_score}%`;
 
             // Render Explorer Tree (VS Code-like file structure)
             renderExplorerTree(skill);
+            updateSkillMetaControls();
 
             // Load initial file (real Codex skill entrypoint)
             loadWorkspaceFileByPath(skill.entrypoint || 'SKILL.md');
@@ -943,14 +1054,22 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             const button = document.getElementById('btn-install');
             if (!button || !skillId) return;
 
+            const skill = currentSkills.find(candidate => candidate.id === skillId);
+            if (canCurrentAccountDeleteDraftSkill(skill)) {
+                button.className = 'detail-action-button draft-delete-action-button bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 hover:border-red-300 flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm';
+                button.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>삭제</span>';
+                lucide.createIcons({attrs: {"stroke-width": 2}, nameAttr: "data-lucide", scope: button});
+                return;
+            }
+
             const isInstalled = installedSkillIds.has(skillId);
+            button.className = `detail-action-button install-action-button ${isInstalled ? 'is-installed bg-indigo-50 text-indigo-700 border border-indigo-100' : 'is-uninstalled bg-indigo-600 hover:bg-indigo-500 text-white'} flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors shadow-sm`;
             button.innerHTML = `
-                <i data-lucide="${isInstalled ? 'package-check' : 'download'}" class="w-3.5 h-3.5"></i> ${isInstalled ? '설치됨' : '설치하기'}
+                <i data-lucide="download" class="install-default-icon w-3.5 h-3.5"></i>
+                <i data-lucide="trash-2" class="install-hover-icon w-3.5 h-3.5"></i>
+                <span class="install-default-label">${isInstalled ? '설치됨' : '설치하기'}</span>
+                ${isInstalled ? '<span class="install-hover-label">삭제</span>' : ''}
             `;
-            button.classList.toggle('bg-indigo-600', !isInstalled);
-            button.classList.toggle('hover:bg-indigo-500', !isInstalled);
-            button.classList.toggle('bg-slate-700', isInstalled);
-            button.classList.toggle('hover:bg-slate-600', isInstalled);
             lucide.createIcons({attrs: {"stroke-width": 2}, nameAttr: "data-lucide", scope: button});
         }
 
@@ -1067,27 +1186,132 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             return ownedByName || forkedByAccount || ownDraft;
         }
 
+        function updateSkillMetaControls() {
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+            const canEdit = canCurrentAccountEditSkill(skill);
+            const editButton = document.getElementById('btn-edit-skill-meta');
+            const editor = document.getElementById('skill-meta-editor');
+            const saveButton = document.getElementById('btn-save-skill-meta');
+
+            if (!editButton || !editor || !saveButton) return;
+
+            editButton.classList.toggle('hidden', !canEdit || isEditingSkillMeta);
+            editButton.classList.toggle('inline-flex', canEdit && !isEditingSkillMeta);
+            editor.classList.toggle('hidden', !isEditingSkillMeta);
+            saveButton.disabled = isSavingSkillMeta;
+            saveButton.classList.toggle('opacity-60', isSavingSkillMeta);
+            lucide.createIcons({ scope: editButton.parentElement });
+            lucide.createIcons({ scope: editor });
+        }
+
+        function readEditableSkillManifest(skill) {
+            const fallbackManifest = (() => {
+                const { file_contents, files, source_path, has_manifest, ...manifest } = skill;
+                return manifest;
+            })();
+
+            const manifestContent = skill.file_contents?.['skill.json'];
+            if (!manifestContent) return fallbackManifest;
+
+            try {
+                return JSON.parse(manifestContent);
+            } catch (error) {
+                return fallbackManifest;
+            }
+        }
+
+        function openSkillMetaEditor() {
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+
+            if (!canCurrentAccountEditSkill(skill)) {
+                showToast('본인이 만든 스킬 또는 Fork한 스킬만 수정할 수 있습니다.', 'error');
+                return;
+            }
+
+            const manifest = readEditableSkillManifest(skill);
+            document.getElementById('skill-meta-name').value = manifest.name || skill.name || '';
+            document.getElementById('skill-meta-short-description').value = manifest.short_description || skill.short_description || '';
+            document.getElementById('skill-meta-status').value = manifest.status || skill.status || 'Draft';
+
+            isEditingSkillMeta = true;
+            updateSkillMetaControls();
+            document.getElementById('skill-meta-name')?.focus();
+        }
+
+        function closeSkillMetaEditor() {
+            isEditingSkillMeta = false;
+            updateSkillMetaControls();
+        }
+
+        async function saveSkillMetaEdit(event) {
+            event?.preventDefault();
+
+            const skill = currentSkills.find(s => s.id === activeSkillId);
+            if (!skill || isSavingSkillMeta) return;
+
+            const name = document.getElementById('skill-meta-name')?.value.trim();
+            const shortDescription = document.getElementById('skill-meta-short-description')?.value.trim();
+            const status = document.getElementById('skill-meta-status')?.value || skill.status;
+
+            if (!name || !shortDescription) {
+                showToast('스킬명과 한 줄 설명을 입력해주세요.', 'error');
+                return;
+            }
+
+            const manifest = {
+                ...readEditableSkillManifest(skill),
+                name,
+                short_description: shortDescription,
+                status
+            };
+
+            isSavingSkillMeta = true;
+            updateSkillMetaControls();
+
+            try {
+                const selectedFilePath = currentFilePath || skill.entrypoint || 'SKILL.md';
+                const response = await fetch(`/api/skills/${encodeURIComponent(activeSkillId)}/files`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        accountId: CURRENT_ACCOUNT.id,
+                        accountName: CURRENT_ACCOUNT.name,
+                        adminPassword: isAdminMode ? ADMIN_ACCESS_PASSWORD : undefined,
+                        filePath: 'skill.json',
+                        content: `${JSON.stringify(manifest, null, 2)}\n`
+                    })
+                });
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.error || `Skill metadata save failed with ${response.status}`);
+                }
+
+                replaceSkillInCatalog(payload.skill);
+                isEditingSkillMeta = false;
+                applyFilterAndSort();
+                loadSkillDetail(payload.skill.id);
+                loadWorkspaceFileByPath(selectedFilePath);
+                showToast('스킬 정보를 저장했습니다.', 'success');
+            } catch (error) {
+                console.error(error);
+                showToast(error.message || '스킬 정보 저장에 실패했습니다.', 'error');
+            } finally {
+                isSavingSkillMeta = false;
+                updateSkillMetaControls();
+            }
+        }
+
         function updateEditorControls() {
             const skill = currentSkills.find(s => s.id === activeSkillId);
             const canEdit = canCurrentAccountEditSkill(skill);
-            const modeLabel = document.getElementById('editor-mode-label');
             const editButton = document.getElementById('btn-edit-file');
             const saveButton = document.getElementById('btn-save-file');
             const cancelButton = document.getElementById('btn-cancel-edit');
 
-            if (!modeLabel || !editButton || !saveButton || !cancelButton) return;
+            if (!editButton || !saveButton || !cancelButton) return;
 
-            modeLabel.textContent = isEditingFile
-                ? 'VIEW MODE: TEXT EDIT'
-                : isAdminMode
-                    ? 'VIEW MODE: ADMIN EDIT'
-                : isMarkdownFile(currentFilePath)
-                    ? `VIEW MODE: ${markdownViewMode === 'source' ? 'RAW MARKDOWN' : 'RENDERED MARKDOWN'}`
-                    : canEdit ? 'VIEW MODE: EDITABLE PREVIEW' : 'VIEW MODE: READ-ONLY PREVIEW';
-            modeLabel.classList.toggle('text-emerald-600', canEdit && !isEditingFile);
-            modeLabel.classList.toggle('text-blue-600', isEditingFile);
-            modeLabel.classList.toggle('text-slate-400', !canEdit && !isEditingFile);
-
+            updateSkillMetaControls();
             updateMarkdownViewControls();
             editButton.classList.toggle('hidden', !canEdit || isEditingFile);
             editButton.classList.toggle('flex', canEdit && !isEditingFile);
@@ -1132,6 +1356,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
             if (!['rendered', 'source'].includes(mode) || !isMarkdownFile(currentFilePath)) return;
 
             markdownViewMode = mode;
+            sessionStorage.setItem(MARKDOWN_VIEW_MODE_STORAGE_KEY, mode);
             renderFilePreview(currentFilePath, currentFileContent);
             updateEditorControls();
         }
@@ -1230,7 +1455,6 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
         // Load real skill files supplied by the backend catalog.
         function loadWorkspaceFileByPath(filePath) {
             isEditingFile = false;
-            markdownViewMode = 'rendered';
             // Unhighlight all
             document.querySelectorAll('.tree-node').forEach(el => {
                 el.classList.remove('bg-slate-200', 'text-slate-900');
@@ -1304,7 +1528,13 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                 applyFilterAndSort();
                 showToast(`[${skill.name}] 스킬에 좋아요를 등록했습니다.`, 'success');
             } else if (action === 'install') {
-                await installSkillForCurrentAccount(skill);
+                if (canCurrentAccountDeleteDraftSkill(skill)) {
+                    await deleteDraftSkillForCurrentAccount(skill);
+                } else if (installedSkillIds.has(skill.id)) {
+                    await uninstallSkillForCurrentAccount(skill);
+                } else {
+                    await installSkillForCurrentAccount(skill);
+                }
                 document.getElementById('detail-down-cnt').textContent = skill.downloads.toLocaleString();
             } else if (action === 'run') {
                 skill.runs++;
@@ -1479,8 +1709,7 @@ const ADMIN_MODE_STORAGE_KEY = 'skill-marketplace:admin-mode';
                 visibility: visibilityOption,
                 version: "v1.0.0",
                 updated_at: new Date().toISOString().slice(0, 10).replace(/-/g, '.'),
-                tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
-                icon: "sparkles"
+                tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean)
             };
 
             try {

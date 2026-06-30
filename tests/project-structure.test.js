@@ -48,6 +48,16 @@ describe('project structure', () => {
     assert.doesNotMatch(html, /function renderSkillCards/);
   });
 
+  it('lets only the brand mark return to the marketplace home view and clear filters', async () => {
+    const html = await readProjectFile('frontend/index.html');
+    const app = await readProjectFile('frontend/src/app.js');
+
+    assert.match(html, /<button type="button" onclick="returnToMarketplaceHome\(\)"[^>]*aria-label="마켓플레이스 초기 화면으로 이동"[\s\S]*POSCO Enterprise Portal[\s\S]*AI Skill MarketPlace[\s\S]*<\/button>/);
+    assert.match(html, /<button onclick="switchView\('marketplace'\)" id="nav-marketplace"/);
+    assert.match(app, /function returnToMarketplaceHome\(\)\s*{[\s\S]*resetFilters\(\)/);
+    assert.match(app, /function returnToMarketplaceHome\(\)\s*{[\s\S]*switchView\('marketplace'\)/);
+  });
+
   it('loads skill cards from the backend API with a frontend fallback only', async () => {
     const app = await readProjectFile('frontend/src/app.js');
 
@@ -61,9 +71,14 @@ describe('project structure', () => {
     const app = await readProjectFile('frontend/src/app.js');
     const html = await readProjectFile('frontend/index.html');
 
+    assert.match(html, /id="btn-edit-skill-meta"/);
+    assert.match(html, /id="skill-meta-editor"/);
+    assert.match(html, /id="skill-meta-name"/);
+    assert.match(html, /id="skill-meta-short-description"/);
     assert.match(html, /id="btn-edit-file"/);
     assert.match(html, /id="btn-save-file"/);
-    assert.match(html, /id="editor-mode-label"/);
+    assert.doesNotMatch(html, /id="editor-mode-label"/);
+    assert.doesNotMatch(app, /VIEW MODE:/);
     assert.match(html, /id="nav-admin-mode"/);
     assert.match(html, /id="nav-admin-mode"[^>]*aria-label="관리자 모드"[^>]*h-8 w-8/);
     assert.match(html, /id="admin-modal"/);
@@ -81,6 +96,12 @@ describe('project structure', () => {
     assert.match(app, /if \(isAdminMode\) return true/);
     assert.match(app, /adminPassword: isAdminMode \? ADMIN_ACCESS_PASSWORD : undefined/);
     assert.match(app, /function canCurrentAccountEditSkill\(skill\)/);
+    assert.match(app, /function openSkillMetaEditor\(\)/);
+    assert.match(app, /function closeSkillMetaEditor\(\)/);
+    assert.match(app, /function saveSkillMetaEdit\(event\)/);
+    assert.match(app, /const \{ file_contents, files, source_path, has_manifest, \.\.\.manifest \} = skill/);
+    assert.match(app, /return JSON\.parse\(manifestContent\)/);
+    assert.match(app, /filePath:\s*'skill\.json'/);
     assert.match(app, /function startFileEdit\(\)/);
     assert.match(app, /function saveFileEdit\(\)/);
     assert.match(app, /fetch\(`\/api\/skills\/\$\{encodeURIComponent\(activeSkillId\)\}\/files`/);
@@ -93,24 +114,38 @@ describe('project structure', () => {
     assert.match(html, /id="markdown-view-toggle"/);
     assert.match(html, /setMarkdownViewMode\('rendered'\)/);
     assert.match(html, /setMarkdownViewMode\('source'\)/);
-    assert.match(app, /let markdownViewMode = 'rendered'/);
+    assert.match(app, /let markdownViewMode = readMarkdownViewMode\(\)/);
+    assert.match(app, /return \['rendered', 'source'\]\.includes\(savedMode\) \? savedMode : 'rendered'/);
     assert.match(app, /function isMarkdownFile\(filePath\)/);
     assert.match(app, /function setMarkdownViewMode\(mode\)/);
     assert.match(app, /currentFilePath,\s*currentFileContent/);
     assert.match(app, /markdown-source-view/);
   });
 
+  it('remembers the last markdown view mode across detail file changes', async () => {
+    const app = await readProjectFile('frontend/src/app.js');
+
+    assert.match(app, /MARKDOWN_VIEW_MODE_STORAGE_KEY/);
+    assert.match(app, /function readMarkdownViewMode\(\)/);
+    assert.match(app, /let markdownViewMode = readMarkdownViewMode\(\)/);
+    assert.match(app, /sessionStorage\.setItem\(MARKDOWN_VIEW_MODE_STORAGE_KEY,\s*mode\)/);
+
+    const loadWorkspaceBody = app.match(/function loadWorkspaceFileByPath\(filePath\) \{[\s\S]*?\n        \}/)?.[0] || '';
+    assert.doesNotMatch(loadWorkspaceBody, /markdownViewMode\s*=\s*'rendered'/);
+  });
+
   it('anchors the full file-mode control group to the right', async () => {
     const html = await readProjectFile('frontend/index.html');
 
-    assert.match(html, /<div class="ml-auto flex items-center gap-2 py-1">[\s\S]*<span id="editor-mode-label"[\s\S]*id="btn-edit-file"[\s\S]*<div id="markdown-view-toggle"/);
+    assert.match(html, /<div class="ml-auto flex items-center gap-2 py-1">[\s\S]*id="btn-edit-file"[\s\S]*<div id="markdown-view-toggle"/);
     assert.doesNotMatch(html, /<div class="ml-auto flex min-w-0 flex-1 items-center gap-2 py-1">/);
     assert.doesNotMatch(html, /id="markdown-view-toggle" class="[^"]*\bml-auto\b/);
-    assert.doesNotMatch(html, /<div id="markdown-view-toggle"[\s\S]*<span id="editor-mode-label"/);
+    assert.doesNotMatch(html, /editor-mode-label/);
   });
 
   it('lets card tag pills filter the catalog and restores filters with browser back', async () => {
     const app = await readProjectFile('frontend/src/app.js');
+    const html = await readProjectFile('frontend/index.html');
 
     assert.match(app, /tag:\s*''/);
     assert.match(app, /function setTagFilter\(tag\)/);
@@ -118,6 +153,16 @@ describe('project structure', () => {
     assert.match(app, /onclick="setTagFilter\('\$\{escapeJsString\(tag\)\}'\)"/);
     assert.match(app, /window\.addEventListener\('popstate',\s*handleCatalogHistoryNavigation\)/);
     assert.match(app, /history\.pushState\(createCatalogHistoryState\(\),\s*'',\s*createCatalogUrl\(\)\)/);
+    assert.match(app, /function createDetailHistoryState\(skillId\)/);
+    assert.match(app, /detail:\s*\{\s*skillId\s*\}/);
+    assert.match(app, /function pushDetailHistory\(skillId\)/);
+    assert.match(app, /history\.pushState\(createDetailHistoryState\(skillId\),\s*'',\s*createCatalogUrl\(\)\)/);
+    assert.match(app, /function navigateBackToCatalog\(\)/);
+    assert.match(app, /history\.state\?\.detail[\s\S]*history\.back\(\)/);
+    assert.match(app, /detailState\?\.skillId[\s\S]*switchView\('detail'\)/);
+    assert.match(app, /switchView\('marketplace'\)/);
+    assert.match(app, /loadSkillDetail\(skillId\);[\s\S]*pushDetailHistory\(skillId\);[\s\S]*switchView\('detail'\)/);
+    assert.match(html, /onclick="navigateBackToCatalog\(\)"/);
   });
 
   it('keeps the detail file viewer in a stable internal scroll layout', async () => {
@@ -127,25 +172,45 @@ describe('project structure', () => {
     assert.match(html, /<body class="[^"]*\bh-screen\b[^"]*\boverflow-hidden\b/);
     assert.match(html, /<main class="[^"]*\bmin-h-0\b[^"]*\boverflow-hidden\b/);
     assert.match(html, /id="view-detail" class="[^"]*\bmin-h-0\b[^"]*\boverflow-hidden\b/);
-    assert.match(html, /<div class="flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">/);
-    assert.match(html, /<aside class="w-full md:w-64 h-64 md:h-auto min-h-0/);
+    assert.match(html, /<div class="detail-workspace flex-1 min-h-0 flex flex-col md:flex-row overflow-hidden">/);
+    assert.match(html, /<aside class="detail-explorer w-full md:w-64 h-64 md:h-auto min-h-0/);
+    assert.match(html, /<main class="detail-document-pane flex-1 min-h-0 flex flex-col bg-white overflow-hidden">/);
     assert.match(html, /class="[^"]*\bmin-h-0\b[^"]*" id="detail-content-area"/);
+    const styles = await readProjectFile('frontend/src/styles.css');
+    assert.match(styles, /#view-detail\s*{[\s\S]*overflow-y:\s*auto\s*!important;/);
+    assert.match(styles, /\.detail-workspace\s*{[\s\S]*flex:\s*none\s*!important;[\s\S]*min-height:\s*max-content\s*!important;/);
+    assert.match(styles, /\.detail-explorer\s*{[\s\S]*height:\s*min\(16rem,\s*32dvh\)\s*!important;/);
+    assert.match(styles, /#detail-content-area\s*{[\s\S]*min-height:\s*28rem;/);
     assert.doesNotMatch(app, /classList\.(?:add|remove)\([^)]*['"]font-semibold['"]/);
   });
 
   it('keeps marketplace scrolling scoped to the skill grid', async () => {
     const html = await readProjectFile('frontend/index.html');
+    const styles = await readProjectFile('frontend/src/styles.css');
 
-    assert.match(html, /id="view-marketplace" class="[^"]*\bflex-1\b[^"]*\bmin-h-0\b[^"]*\boverflow-y-auto\b[^"]*\blg:overflow-hidden\b/);
-    assert.match(html, /<div class="grid grid-cols-1 lg:grid-cols-4 lg:grid-rows-\[minmax\(0,1fr\)\] gap-4 items-start lg:items-stretch lg:flex-1 min-h-0 overflow-visible lg:overflow-hidden">/);
-    assert.match(html, /<aside class="[^"]*\blg:col-span-1\b[^"]*\blg:h-full\b[^"]*\bmin-h-0\b[^"]*\boverflow-visible\b[^"]*\blg:overflow-y-auto\b/);
-    assert.match(html, /<div class="[^"]*\blg:col-span-3\b[^"]*\blg:h-full\b[^"]*\bmin-h-0\b[^"]*\bflex\b[^"]*\bflex-col\b[^"]*\boverflow-visible\b[^"]*\blg:overflow-hidden\b/);
-    assert.match(html, /id="skills-grid" class="[^"]*\blg:flex-1\b[^"]*\blg:min-h-0\b[^"]*\boverflow-visible\b[^"]*\blg:overflow-y-auto\b[^"]*\bauto-rows-max\b/);
+    assert.match(html, /id="view-marketplace" class="[^"]*\bflex-1\b[^"]*\bmin-h-0\b[^"]*\boverflow-y-auto\b[^"]*\bxl:overflow-hidden\b/);
+    assert.match(html, /max-w-\[1840px\]/);
+    assert.match(html, /<div class="marketplace-shell grid grid-cols-1 xl:grid-cols-\[280px_minmax\(0,1fr\)\] xl:grid-rows-\[minmax\(0,1fr\)\] gap-4 items-start xl:items-stretch xl:flex-1 min-h-0 overflow-visible xl:overflow-hidden">/);
+    assert.match(html, /<aside class="marketplace-filter-panel[^"]*\bxl:h-full\b[^"]*\bmin-h-0\b[^"]*\boverflow-visible\b[^"]*\bxl:overflow-y-auto\b/);
+    assert.match(html, /<div class="marketplace-results-panel[^"]*\bxl:h-full\b[^"]*\bmin-h-0\b[^"]*\bflex\b[^"]*\bflex-col\b[^"]*\boverflow-visible\b[^"]*\bxl:overflow-hidden\b/);
+    assert.match(html, /id="skills-grid" class="[^"]*\bmarketplace-skills-grid\b[^"]*\bxl:flex-1\b[^"]*\bxl:min-h-0\b[^"]*\boverflow-visible\b[^"]*\bxl:overflow-y-auto\b[^"]*\bauto-rows-max\b/);
+    assert.match(styles, /\.marketplace-filter-panel\s*{/);
+    assert.match(styles, /@media\s*\(max-width:\s*767\.98px\)\s*{[\s\S]*\.marketplace-filter-panel\s*{[\s\S]*max-height:\s*min\(32rem,\s*42dvh\);[\s\S]*overflow-x:\s*hidden\s*!important;[\s\S]*overflow-y:\s*auto\s*!important;/);
+    assert.match(styles, /@media\s*\(max-width:\s*1279\.98px\)\s*{[\s\S]*\.marketplace-shell\s*{[\s\S]*display:\s*block\s*!important;[\s\S]*min-height:\s*max-content\s*!important;[\s\S]*\.marketplace-results-panel\s*{[\s\S]*min-height:\s*max-content\s*!important;[\s\S]*margin-top:\s*1rem;/);
+    assert.match(styles, /@media\s*\(min-width:\s*768px\)\s*and\s*\(max-width:\s*1279\.98px\)\s*{[\s\S]*\.marketplace-filter-panel\s*{[\s\S]*align-items:\s*start;[\s\S]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\);/);
+    assert.match(styles, /@media\s*\(min-width:\s*1024px\)\s*and\s*\(max-width:\s*1279\.98px\)\s*{[\s\S]*\.marketplace-filter-panel\s*{[\s\S]*grid-template-columns:\s*repeat\(4,\s*minmax\(0,\s*1fr\)\);/);
+    assert.match(styles, /\.marketplace-filter-panel > :nth-child\(2\),\s*[\s\S]*\.marketplace-filter-panel > :nth-child\(3\)\s*{[\s\S]*grid-column:\s*span 2;/);
+    assert.doesNotMatch(styles, /@media\s*\(min-width:\s*1024px\)\s*and\s*\(max-width:\s*1279\.98px\)\s*{[\s\S]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\);/);
+    assert.match(styles, /@media\s*\(min-width:\s*1280px\)\s*{\s*\.marketplace-filter-panel\s*{\s*max-height:\s*calc\(100dvh - 6\.75rem\);/);
+    assert.match(styles, /\.marketplace-skills-grid\s*{[\s\S]*grid-template-columns:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*26rem\),\s*1fr\)\);/);
+    assert.match(styles, /\.marketplace-shell,\s*[\s\S]*\.marketplace-results-panel,\s*[\s\S]*\.marketplace-skills-grid > \[data-skill-id\][\s\S]*min-width:\s*0;/);
+    assert.match(styles, /\.marketplace-skills-grid > \[data-skill-id\]\s*{[\s\S]*overflow-wrap:\s*anywhere;/);
   });
 
   it('lets the marketplace switch between detail and summary card modes', async () => {
     const app = await readProjectFile('frontend/src/app.js');
     const html = await readProjectFile('frontend/index.html');
+    const styles = await readProjectFile('frontend/src/styles.css');
 
     assert.match(html, /id="view-mode-detail"/);
     assert.match(html, /id="view-mode-summary"/);
@@ -155,6 +220,13 @@ describe('project structure', () => {
     assert.match(app, /function setCatalogViewMode\(mode\)/);
     assert.match(app, /catalogViewMode === 'summary'/);
     assert.match(app, /function renderSummarySkillCards\(grid, skills\)/);
+    assert.match(app, /skill-card-description/);
+    assert.match(styles, /\.skill-card-description\s*{[\s\S]*min-height:\s*2\.5rem;[\s\S]*-webkit-line-clamp:\s*2;/);
+    assert.match(app, /summary-skill-description/);
+    assert.match(app, /data-skill-id="\$\{skill\.id\}" class="[^"]*\bh-full\b[^"]*\bflex\b[^"]*\bflex-col\b/);
+    assert.match(app, /<div class="grid grid-cols-2 gap-2 mt-auto pt-4">/);
+    assert.match(app, /skill\.short_description/);
+    assert.match(styles, /\.summary-skill-description\s*{[\s\S]*overflow:\s*visible/);
     assert.match(app, /params\.set\('view', catalogViewMode\)/);
     assert.match(app, /skill\.type/);
     assert.match(app, /skill\.status/);
@@ -164,10 +236,30 @@ describe('project structure', () => {
 
   it('places marketplace search in the filter panel without the hero banner', async () => {
     const html = await readProjectFile('frontend/index.html');
+    const app = await readProjectFile('frontend/src/app.js');
 
     assert.doesNotMatch(html, /사내 AI Agent를 위한 최적의 업무 스킬 탐색기/);
     assert.doesNotMatch(html, /업무 자동화 스킬을 즉시 장착하고 재사용하세요/);
-    assert.match(html, /<aside class="[^"]*\blg:col-span-1\b[\s\S]*id="main-search-input"[\s\S]*handleSearch\(\)[\s\S]*id="my-installed-filter-button"/);
+    assert.match(html, /<aside class="marketplace-filter-panel[^"]*\bxl:h-full\b[\s\S]*id="main-search-input"[\s\S]*handleSearch\(\)[\s\S]*id="my-installed-filter-button"/);
+    assert.match(html, /class="grid grid-cols-2 gap-1" id="filter-category"/);
+    assert.match(html, /class="grid grid-cols-2 gap-1" id="filter-type"/);
+    assert.match(html, /class="grid grid-cols-2 gap-1" id="filter-status"/);
+    assert.match(html, /class="grid grid-cols-2 gap-1" id="filter-visibility"/);
+    assert.match(html, /items-center justify-between gap-2 bg-white px-2 py-1\.5 rounded-lg border/);
+    assert.match(html, /id="active-filter-badges" class="hidden shrink-0 flex-wrap gap-2 items-center"/);
+    assert.match(app, /container\.classList\.toggle\('hidden',\s*badgesHTML\.trim\(\) === ''\)/);
+    assert.match(app, /container\.classList\.toggle\('flex',\s*badgesHTML\.trim\(\) !== ''\)/);
+  });
+
+  it('suppresses toast feedback banners from the app shell', async () => {
+    const html = await readProjectFile('frontend/index.html');
+    const app = await readProjectFile('frontend/src/app.js');
+
+    assert.doesNotMatch(html, /id="toast-container"/);
+    assert.match(app, /function showToast\(message, type = 'success'\)/);
+    assert.match(app, /return \{ message, type, suppressed: true \};/);
+    assert.doesNotMatch(app, /document\.createElement\('div'\)/);
+    assert.doesNotMatch(app, /container\.appendChild\(toast\)/);
   });
 
   it('exposes stable backend API placeholders for the future app', async () => {
@@ -177,13 +269,15 @@ describe('project structure', () => {
     assert.match(server, /GET \/api\/skills/);
     assert.match(server, /GET \/api\/installations/);
     assert.match(server, /POST \/api\/installations/);
+    assert.match(server, /DELETE \/api\/installations/);
     assert.match(server, /POST \/api\/skills\/:skillId\/fork/);
+    assert.match(server, /DELETE \/api\/skills\/:skillId/);
     assert.match(server, /PUT \/api\/skills\/:skillId\/files/);
     assert.match(server, /frontend\/index\.html/);
   });
 
   it('stores installed skills separately for each account', async () => {
-    const { installSkillForAccount, readInstalledSkillIds } = await import('../backend/lib/installations.js');
+    const { installSkillForAccount, readInstalledSkillIds, removeSkillFromAllInstallations, uninstallSkillForAccount } = await import('../backend/lib/installations.js');
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'skill-marketplace-install-'));
 
     try {
@@ -199,6 +293,23 @@ describe('project structure', () => {
         accountId: 'oh-myeongcheol',
         skillId: 'investment-report'
       }, tempRoot);
+      await uninstallSkillForAccount({
+        accountId: 'oh-myeongcheol',
+        skillId: 'investment-report'
+      }, tempRoot);
+      await installSkillForAccount({
+        accountId: 'oh-myeongcheol',
+        skillId: 'investment-report'
+      }, tempRoot);
+      await installSkillForAccount({
+        accountId: 'kim-user',
+        skillId: 'shared-draft'
+      }, tempRoot);
+      await installSkillForAccount({
+        accountId: 'oh-myeongcheol',
+        skillId: 'shared-draft'
+      }, tempRoot);
+      await removeSkillFromAllInstallations('shared-draft', tempRoot);
 
       assert.deepEqual(await readInstalledSkillIds('oh-myeongcheol', tempRoot), ['investment-report']);
       assert.deepEqual(await readInstalledSkillIds('kim-user', tempRoot), ['contract-review']);
@@ -210,11 +321,13 @@ describe('project structure', () => {
   it('lets the frontend show only skills installed by the current account', async () => {
     const app = await readProjectFile('frontend/src/app.js');
     const html = await readProjectFile('frontend/index.html');
+    const styles = await readProjectFile('frontend/src/styles.css');
 
     assert.match(app, /CURRENT_ACCOUNT\s*=\s*{/);
     assert.match(app, /installedSkillIds\s*=\s*new Set/);
     assert.match(app, /fetch\(`\/api\/installations\?accountId=\$\{encodeURIComponent\(CURRENT_ACCOUNT\.id\)\}`\)/);
     assert.match(app, /fetch\('\/api\/installations'/);
+    assert.match(app, /method:\s*'DELETE'/);
     assert.match(app, /myInstalled:\s*false/);
     assert.match(app, /activeFilters\.myInstalled/);
     assert.match(app, /installedSkillIds\.has\(item\.id\)/);
@@ -228,7 +341,28 @@ describe('project structure', () => {
     assert.match(app, /showMyDraftSkills\(\)\s*{[\s\S]*activeFilters\.myInstalled = false/);
     assert.match(app, /function normalizePersonalFilterMode\(\)/);
     assert.match(app, /function isCurrentAccountDraftSkill\(skill\)/);
+    assert.match(app, /function canCurrentAccountDeleteDraftSkill\(skill\)/);
+    assert.match(app, /function deleteDraftSkillForCurrentAccount\(skill\)/);
+    assert.match(app, /fetch\(`\/api\/skills\/\$\{encodeURIComponent\(skill\.id\)\}`/);
+    assert.match(app, /method:\s*'DELETE'/);
+    assert.match(app, /currentSkills\s*=\s*currentSkills\.filter\(candidate => candidate\.id !== skill\.id\)/);
+    assert.match(app, /quickAction\('\$\{skill\.id\}', 'delete-draft'\)/);
     assert.match(html, /my-drafts-filter-button/);
+
+    const installSkillBody = app.match(/async function installSkillForCurrentAccount\(skill\) \{[\s\S]*?\n        \}/)?.[0] || '';
+    assert.doesNotMatch(installSkillBody, /activeFilters\.myInstalled\s*=\s*true/);
+    assert.doesNotMatch(installSkillBody, /pushCatalogHistory\(\)/);
+    assert.match(installSkillBody, /refreshCatalogResults\(\)/);
+    assert.match(app, /function uninstallSkillForCurrentAccount\(skill\)/);
+    assert.match(app, /installedSkillIds\.delete\(skill\.id\)/);
+    assert.match(app, /renderInstallActionButton\(skill/);
+    assert.match(app, /install-hover-label">삭제/);
+    assert.doesNotMatch(app, /px-1\.5 py-0\.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-100">설치됨/);
+    assert.match(styles, /\.install-action-button\.is-installed:hover/);
+    assert.match(styles, /color:\s*#b91c1c/);
+    assert.match(styles, /\.install-action-button\s*\{[\s\S]*min-height:\s*2rem/);
+    assert.match(styles, /\.install-action-button\s+\.install-default-label/);
+    assert.doesNotMatch(app, /install-action-button[^`]*active:scale-95/);
   });
 
   it('shows common as the first business area filter after all', async () => {
@@ -435,8 +569,48 @@ Use this skill to prepare a concise daily business brief.
     }
   });
 
+  it('updates skill header metadata by saving skill.json through the existing editor API', async () => {
+    const { createSkillPackage, updateSkillFile } = await import('../backend/lib/skillCatalog.js');
+    const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'skill-marketplace-meta-edit-'));
+
+    try {
+      const created = await createSkillPackage({
+        name: '편집 전 스킬명',
+        short_description: '편집 전 한 줄 설명입니다.',
+        category: '재무',
+        type: '문서분석형',
+        owner: '오명철 과장',
+        team: '경영기획DX추진TF팀',
+        visibility: '전사 공개',
+        tags: ['정산', '편집', '재무', '검토']
+      }, tempRoot);
+
+      const manifest = JSON.parse(await readFile(path.join(tempRoot, created.source_path, 'skill.json'), 'utf8'));
+      manifest.name = '상단에서 수정한 스킬명';
+      manifest.short_description = '상단 편집 패널에서 저장한 설명입니다.';
+      manifest.status = 'Verified';
+      manifest.icon = 'sparkles';
+
+      const result = await updateSkillFile({
+        skillId: created.id,
+        accountId: 'oh-myeongcheol',
+        accountName: '오명철 과장',
+        filePath: 'skill.json',
+        content: `${JSON.stringify(manifest, null, 2)}\n`
+      }, tempRoot);
+
+      assert.equal(result.filePath, 'skill.json');
+      assert.equal(result.skill.name, '상단에서 수정한 스킬명');
+      assert.equal(result.skill.short_description, '상단 편집 패널에서 저장한 설명입니다.');
+      assert.equal(result.skill.status, 'Verified');
+      assert.equal(result.skill.icon, 'sparkles');
+    } finally {
+      await rm(tempRoot, { recursive: true, force: true });
+    }
+  });
+
   it('lets a fork owner edit the fork without changing the original package', async () => {
-    const { createSkillPackage, forkSkillPackage, updateSkillFile } = await import('../backend/lib/skillCatalog.js');
+    const { createSkillPackage, deleteSkillPackage, forkSkillPackage, updateSkillFile } = await import('../backend/lib/skillCatalog.js');
     const tempRoot = await mkdtemp(path.join(os.tmpdir(), 'skill-marketplace-fork-'));
 
     try {
@@ -473,6 +647,23 @@ Use this skill to prepare a concise daily business brief.
 
       assert.equal(await readFile(path.join(tempRoot, original.source_path, 'SKILL.md'), 'utf8'), originalText);
       assert.equal(await readFile(path.join(tempRoot, forked.source_path, 'references', 'input.schema.json'), 'utf8'), '{ "type": "object" }\n');
+
+      await assert.rejects(
+        deleteSkillPackage({
+          skillId: original.id,
+          accountId: 'oh-myeongcheol',
+          accountName: '오명철 과장'
+        }, tempRoot),
+        /Only the skill owner or fork owner can edit this skill|Only draft or fork skills can be deleted/
+      );
+
+      await deleteSkillPackage({
+        skillId: forked.id,
+        accountId: 'oh-myeongcheol',
+        accountName: '오명철 과장'
+      }, tempRoot);
+
+      await assert.rejects(stat(path.join(tempRoot, forked.source_path)), /ENOENT/);
     } finally {
       await rm(tempRoot, { recursive: true, force: true });
     }
